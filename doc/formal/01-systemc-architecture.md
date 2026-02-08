@@ -1,8 +1,46 @@
 # SystemC Phase 1: Top-Down 架構總覽
 
-> **建立時間**: 2025-02-08
+> **建立時間**: 2026-02-08
 > **版本**: SystemC 3.0.2
 > **目標**: 用簡單易懂的方式解釋 SystemC 整體架構
+
+---
+
+## SystemC 核心架構圖
+
+```mermaid
+graph TB
+    subgraph "SystemC 模擬核心"
+        SC[sc_simcontext<br/>模擬器控制中心]
+    end
+    
+    subgraph "模組與行程"
+        MOD[sc_module<br/>模組]
+        PROC[sc_process<br/>行程]
+        MOD --> PROC
+    end
+    
+    subgraph "事件與通訊"
+        EVT[sc_event<br/>事件]
+        SIG[sc_signal<br/>訊號]
+        PORT[sc_port<br/>埠]
+        CHAN[sc_prim_channel<br/>通道]
+        PORT --> SIG
+        SIG --> CHAN
+        CHAN --> EVT
+    end
+    
+    subgraph "時間管理"
+        TIME[sc_time<br/>時間]
+        DC[Delta Cycle<br/>δ 循環]
+        TIME --> DC
+    end
+    
+    SC --> MOD
+    SC --> EVT
+    SC --> TIME
+    PROC --> EVT
+```
 
 ---
 

@@ -1,6 +1,6 @@
 # SystemC 環境準備與資源盤點
 
-> **建立日期**: 2025-02-08  
+> **建立日期**: 2026-02-08  
 > **版本**: SystemC 3.0.2  
 > **標準**: IEEE Std. 1666-2023
 
@@ -228,7 +228,7 @@ TLM 是 SystemC 的擴充，提供**交易級**抽象層次：
 
 ```
 doc/
-├── draft/                         # 草稿筆記
+├── formal/                         # 學習筆記
 │   ├── 00-environment-overview.md # 本文件
 │   ├── 01-systemc-architecture.md # Phase 1: 架構總覽
 │   ├── 02-kernel-simcontext.md    # Phase 2: 模擬核心

@@ -369,17 +369,17 @@ ref/systemc/src/
 
 ## 進度追蹤
 
-| Phase | 主題 | 狀態 | 開始日期 | 完成日期 |
-|:---:|:---|:---:|:---:|:---:|
-| 0 | 環境準備 | [ ] | - | - |
-| 1 | 架構總覽 | [ ] | - | - |
-| 2 | Kernel 分析 | [ ] | - | - |
-| 3 | Communication 分析 | [ ] | - | - |
-| 4 | Datatypes 分析 | [ ] | - | - |
-| 5 | Tracing/Utils 分析 | [ ] | - | - |
-| 6 | TLM 分析 | [ ] | - | - |
-| 7 | 範例分析 | [ ] | - | - |
-| 8 | 整合總結 | [ ] | - | - |
+| Phase | 主題 | 狀態 | 文件名 |
+|:---:|:---|:---:|:---|
+| 0 | 環境準備 | ✅ | `00-environment-overview.md` |
+| 1 | 架構總覽 | ✅ | `01-systemc-architecture.md` |
+| 2 | Kernel 分析 | ✅ | `02-kernel-analysis.md`, `02-kernel-simcontext.md` |
+| 3 | Communication 分析 | ✅ | `03-communication-signal.md` |
+| 4 | Datatypes 分析 | ✅ | `04-datatypes-bit-int.md` |
+| 5 | Tracing/Utils 分析 | ✅ | `05-tracing-overview.md` |
+| 6 | TLM 分析 | ✅ | `06-tlm-overview.md` |
+| 7 | 範例分析 | ✅ | `07-examples-analysis.md` |
+| 8 | 整合總結 | [ ] | `08-complete-guide.md` (待完成) |
 
 ---
 
