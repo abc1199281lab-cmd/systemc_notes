@@ -10,7 +10,7 @@
 - [x] `01-systemc-architecture.md`: SystemC 層級結構（Language, Channels, Core, C++）。
 
 ### Phase 2: 模擬核心深度剖析 (Kernel & Simulation Context)
-- [ ] `02-kernel-simcontext.md`: `sc_simcontext` 的職責、動態機制與全域狀態管理。
+- [x] `02-kernel-simcontext.md`: `sc_simcontext` 的職責、動態機制與全域狀態管理。
 - [ ] `02-kernel-scheduler.md`: 模擬排程器（Scheduler）的五個階段（Initialization, Evaluation, Update, Delta Notification, Timed Notification）。
 - [ ] `02-kernel-process.md`: `SC_METHOD`, `SC_THREAD`, `SC_CTHREAD` 的底層實作與區別。
 - [ ] `02-kernel-event.md`: `sc_event` 隊列、動態敏感度（Dynamic Sensitivity）與事件觸發路徑。
