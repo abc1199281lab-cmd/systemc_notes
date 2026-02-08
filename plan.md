@@ -13,8 +13,8 @@
 - [x] `02-kernel-simcontext.md`: `sc_simcontext` 的職責、動態機制與全域狀態管理。
 - [x] `02-kernel-scheduler.md`: 模擬排程器（Scheduler）的五個階段（Initialization, Evaluation, Update, Delta Notification, Timed Notification）。
 - [x] `02-kernel-process.md`: `SC_METHOD`, `SC_THREAD`, `SC_CTHREAD` 的底層實作與區別。
-- [ ] `02-kernel-event.md`: `sc_event` 隊列、動態敏感度（Dynamic Sensitivity）與事件觸發路徑。
-- [ ] `02-kernel-module.md`: `sc_module` 的構造過程、`before_end_of_elaboration` 等生命週期回呼。
+- [x] `02-kernel-event.md`: `sc_event` 隊列、動態敏感度（Dynamic Sensitivity）與事件觸發路徑。
+- [x] `02-kernel-module.md`: `sc_module` 的構造過程、`before_end_of_elaboration` 等生命週期回呼。
 
 ### Phase 3: 通訊機制與介面 (Communication & Interfaces)
 - [ ] `03-communication-interface.md`: `sc_interface` 與 `sc_port` 的抽象層次。
