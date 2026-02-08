@@ -25,7 +25,7 @@
 ### Phase 4: 資料型別與硬體映射 (Data Types & RTL)
 - [x] `04-datatypes-bit-int.md`: `sc_bit`, `sc_logic`, `sc_int`, `sc_bigint` 的位元寬度處理與效能考量。
 - [x] `04-datatypes-fixed.md`: 定點數（Fixed-point）運算與捨入模式。
-- [ ] `99-rtl-mapping.md`: SystemC 語義與 Verilog/VHDL RTL 的對照分析（如 `always` block 映射）。
+- [x] `99-rtl-mapping.md`: SystemC 語義與 Verilog/VHDL RTL 的對照分析（如 `always` block 映射）。
 
 ### Phase 5: TLM 2.0 深度分析
 - [ ] `05-tlm-initiator-target.md`: Socket 通訊模型與介面。
