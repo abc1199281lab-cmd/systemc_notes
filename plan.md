@@ -20,7 +20,7 @@
 - [x] `03-communication-interface.md`: `sc_interface` 與 `sc_port` 的抽象層次。
 - [x] `03-communication-channel.md`: 階層式頻道（Hierarchical Channels）與基本頻道（Primitive Channels）的實作。
 - [x] `03-communication-signal.md`: `sc_signal` 的 `write()` 與 `update()` 分離機制（避免 Race Condition）。
-- [ ] `03-communication-fifo.md`: `sc_fifo` 的同步阻塞機制分析。
+- [x] `03-communication-fifo.md`: `sc_fifo` 的同步阻塞機制分析。
 
 ### Phase 4: 資料型別與硬體映射 (Data Types & RTL)
 - [ ] `04-datatypes-bit-int.md`: `sc_bit`, `sc_logic`, `sc_int`, `sc_bigint` 的位元寬度處理與效能考量。
