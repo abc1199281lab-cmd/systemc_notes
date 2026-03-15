@@ -47,18 +47,18 @@
 
 ## 8. P7 - Top-down 概念架構文件
 
-- [ ] 8.1 建立 `doc_v2/topdown/` 目錄與 `_index.md`
-- [ ] 8.2 撰寫 `learning-path.md`（學習路徑索引，含難度標示與前置知識）
-- [ ] 8.3 撰寫 `simulation-engine.md`（模擬引擎核心概念）
-- [ ] 8.4 撰寫 `events.md`（事件機制）
-- [ ] 8.5 撰寫 `scheduling.md`（排程機制）
-- [ ] 8.6 撰寫 `hierarchy.md`（模組層級結構）
-- [ ] 8.7 撰寫 `communication.md`（通訊機制：port, channel, signal）
-- [ ] 8.8 撰寫 `datatypes.md`（資料型別）
-- [ ] 8.9 撰寫 `tracing.md`（波形追蹤）
-- [ ] 8.10 撰寫 `tlm.md`（Transaction Level Modeling）
-- [ ] 8.11 每份 top-down 文件加入「相關模組」段落與跨模組 Mermaid 圖表
-- [ ] 8.12 Commit 並 push P7
+- [x] 8.1 建立 `doc_v2/topdown/` 目錄與 `_index.md`
+- [x] 8.2 撰寫 `learning-path.md`（學習路徑索引，含難度標示與前置知識）
+- [x] 8.3 撰寫 `simulation-engine.md`（模擬引擎核心概念）
+- [x] 8.4 撰寫 `events.md`（事件機制）
+- [x] 8.5 撰寫 `scheduling.md`（排程機制）
+- [x] 8.6 撰寫 `hierarchy.md`（模組層級結構）
+- [x] 8.7 撰寫 `communication.md`（通訊機制：port, channel, signal）
+- [x] 8.8 撰寫 `datatypes.md`（資料型別）
+- [x] 8.9 撰寫 `tracing.md`（波形追蹤）
+- [x] 8.10 撰寫 `tlm.md`（Transaction Level Modeling）
+- [x] 8.11 每份 top-down 文件加入「相關模組」段落與跨模組 Mermaid 圖表
+- [x] 8.12 Commit 並 push P7
 
 ## 9. 收尾與全局整合
 
