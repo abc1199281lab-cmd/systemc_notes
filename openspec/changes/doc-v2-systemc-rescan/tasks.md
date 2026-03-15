@@ -9,13 +9,13 @@
 - [x] 2.1 建立 `doc_v2/code/sysc/kernel/` 目錄與 `_index.md`
 - [x] 2.2 為 `ref/systemc/src/sysc/kernel/` 下每個 `.cpp`/`.h` 檔案產出對應文件（含 class/function 說明、設計原理、RTL 背景）
 - [x] 2.3 為 kernel 子系統建立依賴關係圖（Mermaid classDiagram / flowchart）
-- [ ] 2.4 Commit 並 push P1
+- [x] 2.4 Commit 並 push P1
 
 ## 3. P2 - Communication 子系統（Bottom-up）
 
-- [ ] 3.1 建立 `doc_v2/code/sysc/communication/` 目錄與 `_index.md`
-- [ ] 3.2 為 `ref/systemc/src/sysc/communication/` 下每個檔案產出對應文件
-- [ ] 3.3 為 communication 子系統建立依賴關係圖
+- [x] 3.1 建立 `doc_v2/code/sysc/communication/` 目錄與 `_index.md`
+- [x] 3.2 為 `ref/systemc/src/sysc/communication/` 下每個檔案產出對應文件
+- [x] 3.3 為 communication 子系統建立依賴關係圖
 - [ ] 3.4 Commit 並 push P2
 
 ## 4. P3 - Datatypes 子系統（Bottom-up）
