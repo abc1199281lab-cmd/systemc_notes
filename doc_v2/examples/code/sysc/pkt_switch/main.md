@@ -9,7 +9,7 @@
 3. 設定初始參數
 4. 啟動系統
 
-類似 Spring Boot 的 `@Configuration` class，或 Docker Compose 的 `docker-compose.yml` -- 定義有哪些 service、它們之間怎麼連接。
+類似 dependency injection (like Python's inject library) 的 configuration，或 Docker Compose 的 `docker-compose.yml` -- 定義有哪些 service、它們之間怎麼連接。
 
 ## 系統組成
 

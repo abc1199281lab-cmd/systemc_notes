@@ -8,7 +8,7 @@
 2. 把元件之間的介面連接起來（信號綁定）
 3. 啟動整個系統（開始模擬）
 
-用軟體框架的語言：這就是 Spring 的 ApplicationContext 或 Angular 的 Module -- 定義元件之間的 wiring。
+用軟體框架的語言：這就是 dependency injection (like Python's inject library) 的 container 或 Angular 的 Module -- 定義元件之間的 wiring。
 
 ## 兩個版本的比較
 

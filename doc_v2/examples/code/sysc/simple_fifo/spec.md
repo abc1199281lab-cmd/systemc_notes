@@ -16,8 +16,8 @@ FIFO 是 **First In, First Out** 的縮寫，在硬體世界中，它是一個**
 
 | 軟體技術 | 等效概念 | 特點 |
 | --- | --- | --- |
-| Go `chan T` (buffered) | 有容量限制的 channel | 滿時 send 阻塞，空時 receive 阻塞 |
-| Java `ArrayBlockingQueue` | 固定大小的阻塞佇列 | 基於 ReentrantLock + Condition |
+| Python `queue.Queue(maxsize)` (bounded) | 有容量限制的 queue | 滿時 put 阻塞，空時 get 阻塞 |
+| C++ `std::queue` + condition_variable | 固定大小的阻塞佇列 | 基於 std::mutex + std::condition_variable |
 | Unix pipe | `cmd1 \| cmd2` | 核心中有 64KB 的緩衝區 |
 | Python `queue.Queue(maxsize)` | 執行緒安全的有界佇列 | 底層用 Lock + Condition |
 | Kafka partition | 持久化的 FIFO | 生產者/消費者解耦 |

@@ -25,7 +25,7 @@ class read_if : virtual public sc_interface {
 };
 ```
 
-和 simple_fifo 完全相同。`write_if` 和 `read_if` 定義了 FIFO 的讀寫契約，就像 Java 的 interface 或 Go 的 interface。
+和 simple_fifo 完全相同。`write_if` 和 `read_if` 定義了 FIFO 的讀寫契約，就像 C++ 的 abstract class 或 Python 的 ABC。
 
 ## FIFO 實作 -- 效能版
 

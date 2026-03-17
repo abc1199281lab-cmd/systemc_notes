@@ -125,16 +125,14 @@ SC_MODULE(CONSUMER)
 
    軟體類比：這就像 `try-catch` 包住整個函式，reset 時拋出一個特殊的 exception，被外層 catch 住後重新呼叫函式：
 
-   ```java
-   // Java 類比
-   while (true) {
-       try {
-           consumer();  // 正常執行
-       } catch (ResetException e) {
-           // reset 觸發，重新開始
-           continue;
-       }
-   }
+   ```python
+   # Python 類比
+   while True:
+       try:
+           consumer()  # 正常執行
+       except ResetException:
+           # reset 觸發，重新開始
+           continue
    ```
 
 3. **`do { wait(); } while (!m_valid)`**: 這是硬體設計中的經典**握手（handshake）**模式 -- 等到對方準備好才繼續。每次 `wait()` 等待一個 clock cycle。

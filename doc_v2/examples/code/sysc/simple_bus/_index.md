@@ -137,7 +137,7 @@ In software terms, this is like having separate `ReadOnlyRepository`, `AsyncRepo
 
 ### 2. sc_channel -- A Module That IS an Interface
 
-`simple_bus` is both an `sc_module` (it has processes, ports) and an `sc_interface` implementation (it provides `burst_read`, `read`, `direct_read`). In SystemC, this combination is called a **hierarchical channel**. It's similar to a Java class that `implements` multiple interfaces while also being a Spring `@Component`.
+`simple_bus` is both an `sc_module` (it has processes, ports) and an `sc_interface` implementation (it provides `burst_read`, `read`, `direct_read`). In SystemC, this combination is called a **hierarchical channel**. It's similar to a C++ class that inherits from multiple abstract classes (C++ abstract class / Python ABC) while also being a component managed by dependency injection (like Python's inject library).
 
 ### 3. Arbitration
 

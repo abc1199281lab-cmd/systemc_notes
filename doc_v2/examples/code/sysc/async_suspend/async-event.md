@@ -1,7 +1,7 @@
 # async_event.h -- 跨執行緒事件通知
 
 > **原始碼**: `ref/systemc/examples/sysc/async_suspend/async_event.h`
-> **難度**: 中級 | **軟體類比**: Go channel 從 goroutine 通知主執行緒 / `loop.call_soon_threadsafe()`
+> **難度**: 中級 | **軟體類比**: Python `queue.Queue` 從 thread 通知主執行緒 / `loop.call_soon_threadsafe()`
 
 ## 概述
 
@@ -117,23 +117,28 @@ sequenceDiagram
 
 ## 軟體類比
 
-### Go Channel 模式
+### Python queue.Queue 模式
 
-```go
-// async_event 的概念等價：
-notifyCh := make(chan time.Duration, 1)
+```python
+# async_event 的概念等價：
+import queue
+import threading
+import time
 
-// 外部 goroutine（相當於 std::thread）
-go func() {
-    time.Sleep(1 * time.Second)
-    notifyCh <- 10 * time.Nanosecond  // 相當於 notify(10ns)
-}()
+notify_q = queue.Queue(maxsize=1)
 
-// 主 goroutine（相當於 SystemC kernel）
-for delay := range notifyCh {
-    time.Sleep(delay)
-    handleEvent()  // 相當於觸發 SC_METHOD
-}
+# 外部 thread（相當於 std::thread）
+def external_thread():
+    time.sleep(1)
+    notify_q.put(10e-9)  # 相當於 notify(10ns)
+
+threading.Thread(target=external_thread).start()
+
+# 主 thread（相當於 SystemC kernel）
+while True:
+    delay = notify_q.get()
+    time.sleep(delay)
+    handle_event()  # 相當於觸發 SC_METHOD
 ```
 
 ### Python asyncio 模式
@@ -161,9 +166,9 @@ executor.submit(external_work)
 但外部執行緒可能還在運行，隨時可能送來新事件。`async_attach_suspending()` 告訴 kernel：「我是一個外部事件來源，別急著結束。」
 
 **軟體類比**:
-- Node.js: `server.listen()` 讓 event loop 保持活躍，即使沒有 pending callback
-- Go: `select {}` 阻止 main goroutine 退出
-- Java: `CountDownLatch` 讓 main thread 等待
+- Python asyncio: `loop.run_forever()` 讓 event loop 保持活躍，即使沒有 pending callback
+- Python threading: `threading.Event().wait()` 阻止 main thread 退出
+- C++: `std::condition_variable::wait()` 讓 main thread 等待
 
 ## 注意事項
 

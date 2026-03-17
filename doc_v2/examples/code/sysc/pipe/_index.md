@@ -128,13 +128,13 @@ classDiagram
 
 | 特性 | SC_METHOD | SC_THREAD |
 |---|---|---|
-| **軟體類比** | callback function | coroutine / goroutine |
+| **軟體類比** | callback function | coroutine / Python coroutine (asyncio) |
 | **執行方式** | 每次觸發時從頭執行到尾 | 可在中途 `wait()` 暫停 |
 | **狀態保持** | 靠成員變數 | 靠 local 變數 + `wait()` |
 | **效能** | 較快（無 context switch） | 較慢（需要保存 stack） |
 | **適用場景** | 組合邏輯、簡單時序邏輯 | 複雜控制流程 |
 
-SC_METHOD 就像 JavaScript 的 event handler：瀏覽器每次觸發事件時呼叫你的函式，函式必須立刻返回，不能阻塞。
+SC_METHOD 就像 Python 的 callback function：每次事件觸發時呼叫你的函式，函式必須立刻返回，不能阻塞。
 
 ### sc_signal 連接
 

@@ -119,7 +119,7 @@ graph TB
 |-------------|----------------|---------|
 | `SC_CTHREAD` | Sender 使用 clocked thread，在 clock 正緣觸發 | 定時排程的 worker thread |
 | `SC_METHOD` | Receiver 和 switch_clk 使用 method，事件驅動 | Event callback / listener |
-| `SC_THREAD` | Switch 使用 thread，可以 `wait()` 等待事件 | 長期運行的 goroutine |
+| `SC_THREAD` | Switch 使用 thread，可以 `wait()` 等待事件 | 長期運行的 Python coroutine (asyncio) |
 | `sc_signal<pkt>` | 自定義 struct 作為信號型別 | Typed message channel |
 | 多時脈域 | Sender 用 75ns clock，switch 用 30ns clock | 不同頻率的 event loop |
 | `dont_initialize()` | Receiver 啟動時不執行（忽略初始值） | 延遲初始化 |

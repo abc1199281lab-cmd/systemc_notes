@@ -39,8 +39,8 @@ class write_if : virtual public sc_interface
 
 **用途**: 定義「寫入端」能做什麼事。這就是一個純虛擬介面（pure virtual interface），等同於：
 
-- **Go**: `type WriteIF interface { Write(c byte); Reset() }`
-- **Java**: `interface WriteIF { void write(char c); void reset(); }`
+- **Python**: `class WriteIF(ABC): @abstractmethod write(c); @abstractmethod reset()`
+- **C++**: `class WriteIF { virtual void write(char c) = 0; virtual void reset() = 0; };`
 
 **為什麼用 `virtual` 繼承 `sc_interface`?**
 
@@ -59,11 +59,11 @@ class read_if : virtual public sc_interface
 
 **用途**: 定義「讀取端」能做什麼事。注意 `read` 的參數是**引用（reference）**，這是 C++ 中回傳值的常見手法。
 
-`num_available()` 讓消費者可以查詢目前 FIFO 中有多少資料可讀，相當於 Java `BlockingQueue.size()`。
+`num_available()` 讓消費者可以查詢目前 FIFO 中有多少資料可讀，相當於 Python `queue.Queue.qsize()`。
 
 ### 3. `fifo` -- FIFO 通道（第 59-92 行）
 
-這是本範例的核心。`fifo` 同時實作了 `write_if` 和 `read_if`，就像一個 Go channel 同時支援 `<-ch`（讀）和 `ch<-`（寫）。
+這是本範例的核心。`fifo` 同時實作了 `write_if` 和 `read_if`，就像一個 Python queue.Queue 同時支援 `get()`（讀）和 `put()`（寫）。
 
 ```cpp
 class fifo : public sc_channel, public write_if, public read_if
@@ -98,7 +98,7 @@ classDiagram
     write_if <|.. fifo
     read_if <|.. fifo
 
-    note for fifo "同時實作兩個 interface\n就像 Go channel 同時支援讀寫"
+    note for fifo "同時實作兩個 interface\n就像 Python queue.Queue 同時支援讀寫"
 ```
 
 #### 內部資料結構
@@ -136,15 +136,15 @@ void write(char c) {
 }
 ```
 
-**與 Go channel 的對比**:
+**與 Python queue.Queue 的對比**:
 
-| 操作 | Go channel | SystemC fifo |
+| 操作 | Python queue.Queue | SystemC fifo |
 | --- | --- | --- |
-| 寫入 | `ch <- data` | `fifo.write(data)` |
-| 滿時行為 | goroutine 被暫停 | `wait(read_event)` 暫停 SC_THREAD |
-| 喚醒機制 | Go runtime 自動處理 | `write_event.notify()` 手動通知 |
+| 寫入 | `q.put(data)` | `fifo.write(data)` |
+| 滿時行為 | 呼叫端被阻塞 | `wait(read_event)` 暫停 SC_THREAD |
+| 喚醒機制 | Python 內部 Condition 自動處理 | `write_event.notify()` 手動通知 |
 
-**重要細節**: `wait()` 在 SystemC 中會**讓出執行權**給模擬器核心（simulator kernel），讓其他 thread 有機會執行。這跟 Go 的 goroutine scheduler 概念一致 -- 你不是在忙等（busy wait），而是真正地暫停。
+**重要細節**: `wait()` 在 SystemC 中會**讓出執行權**給模擬器核心（simulator kernel），讓其他 thread 有機會執行。這跟 Python asyncio 的 event loop scheduler 概念一致 -- 你不是在忙等（busy wait），而是真正地暫停。
 
 #### `read()` -- 讀取與阻塞
 
@@ -188,10 +188,10 @@ class producer : public sc_module
 **關鍵設計**:
 
 - **`sc_port<write_if>`**: 這是一個「型別安全的插座」。producer 只知道自己連接到一個實作了 `write_if` 的東西，完全不知道具體實作是 `fifo`。這就是**依賴反轉（Dependency Inversion）**。
-  - 軟體類比：Spring 的 `@Autowired WriteIF out;`
-  - Go 類比：`var out WriteIF` -- 只依賴 interface，不依賴 concrete type
+  - 軟體類比：dependency injection (like Python's inject library) 的 `@inject`
+  - Python 類比：只依賴 ABC interface，不依賴 concrete type
 
-- **`SC_THREAD(main)`**: 將 `main()` 函式註冊為一個 SystemC thread。這類似於 `go main()` -- 一個獨立的執行單元，可以被暫停和恢復。
+- **`SC_THREAD(main)`**: 將 `main()` 函式註冊為一個 SystemC thread。這類似於 `asyncio.create_task(main())` -- 一個獨立的執行單元，可以被暫停和恢復。
 
 - **`out->write(*str++)`**: 透過 port 呼叫 interface 方法。`->` 是 `sc_port` 重載的運算子，實際上呼叫的是 FIFO 的 `write()`。
 
@@ -251,13 +251,13 @@ class top : public sc_module
 };
 ```
 
-`top` 是**組裝者**，負責建立所有子模組並把它們連接起來。這就像 Spring 的 `@Configuration` 類別或 Go 的 `main()` 中做依賴注入：
+`top` 是**組裝者**，負責建立所有子模組並把它們連接起來。這就像 Python 的 `main()` 中做依賴注入：
 
-```go
-// Go 類比
-fifo := NewFifo(10)
-producer := NewProducer(fifo)  // 注入 WriteIF
-consumer := NewConsumer(fifo)  // 注入 ReadIF
+```python
+# Python 類比
+fifo = Fifo(maxsize=10)
+producer = Producer(fifo)  # 注入 WriteIF
+consumer = Consumer(fifo)  # 注入 ReadIF
 ```
 
 **為什麼 `prod_inst->out(*fifo_inst)` 可以運作？**
@@ -344,7 +344,7 @@ sequenceDiagram
 
 | 特性 | SC_THREAD | SC_METHOD |
 | --- | --- | --- |
-| 軟體類比 | goroutine / Thread | callback / event handler |
+| 軟體類比 | Python coroutine (asyncio) / Thread | callback / event handler |
 | 可以 `wait()` | 可以 | 不行 |
 | 執行方式 | 可以暫停/恢復 | 每次從頭執行到尾 |
 | 適用場景 | 需要等待事件的複雜邏輯 | 簡單的組合邏輯 |

@@ -2,7 +2,7 @@
 
 ## 軟體類比
 
-FIFO 就是一個 **固定大小的 queue**（bounded queue），容量為 4。它的行為跟 Java 的 `ArrayBlockingQueue<Packet>(4)` 或 Go 的 `make(chan Packet, 4)` 幾乎一樣：
+FIFO 就是一個 **固定大小的 queue**（bounded queue），容量為 4。它的行為跟 Python 的 `queue.Queue(maxsize=4)` 幾乎一樣：
 
 - 空間還有就放進去，滿了就拒絕（由呼叫端決定 drop 或 block）
 - 取出時按照先進先出的順序

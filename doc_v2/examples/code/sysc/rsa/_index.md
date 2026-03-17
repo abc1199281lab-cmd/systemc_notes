@@ -1,12 +1,12 @@
 # rsa -- RSA 公鑰加密範例
 
-> **難度**: 中級 | **軟體類比**: Java `BigInteger` / Python 原生大整數 | **原始碼**: `ref/systemc/examples/sysc/rsa/rsa.cpp`
+> **難度**: 中級 | **軟體類比**: Python 原生大整數 (native big int) | **原始碼**: `ref/systemc/examples/sysc/rsa/rsa.cpp`
 
 ## 概述
 
 `rsa` 範例展示了一個完全**非硬體**的應用：使用 SystemC 的 `sc_bigint<NBITS>` 任意精度整數型別，實作經典的 **RSA 公鑰加密演算法**。
 
-這個範例的重點不在於模擬硬體，而是證明 SystemC 的資料型別也可以用於**純演算法建模**。就像你可以用 Java 的 `BigInteger` 或 Python 的原生大整數來實作密碼學演算法一樣，SystemC 的 `sc_bigint` 提供了相同的能力。
+這個範例的重點不在於模擬硬體，而是證明 SystemC 的資料型別也可以用於**純演算法建模**。就像你可以用 Python 的原生大整數來實作密碼學演算法一樣，SystemC 的 `sc_bigint` 提供了相同的能力。
 
 ### 為什麼這很重要？
 
@@ -81,7 +81,7 @@ flowchart TD
 
 | SystemC 概念 | 軟體對應 | 在本範例中的角色 |
 | --- | --- | --- |
-| `sc_bigint<NBITS>` | Java `BigInteger` / Python `int` | 250-bit 任意精度整數，用於所有 RSA 運算 |
+| `sc_bigint<NBITS>` | Python native big int | 250-bit 任意精度整數，用於所有 RSA 運算 |
 | `sc_main()` | `main()` | 程式進入點，呼叫 `rsa()` 函式 |
 | 無 `sc_module` | 本範例沒有硬體模組 | 純粹的演算法示範，不使用 SystemC 模擬功能 |
 

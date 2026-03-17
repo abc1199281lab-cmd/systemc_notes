@@ -113,7 +113,7 @@ flowchart LR
 
 | SystemC / 硬體概念 | 軟體類比 |
 | --- | --- |
-| FIFO | Go channel / BlockingQueue |
+| FIFO | Python queue.Queue |
 | Pipeline | Unix pipe / ETL chain |
 | FIR Filter | 滑動視窗加權平均 |
 | FFT | 頻譜分析器 / 音樂等化器 |
@@ -121,13 +121,13 @@ flowchart LR
 | Bus Arbitration | 共享資源 + Mutex / 執行緒排程器 |
 | RISC CPU | 指令解譯器 + 快取系統 |
 | TLM LT | 同步 HTTP (fetch + await) |
-| TLM AT | 非同步 HTTP (callback/Promise) |
+| TLM AT | 非同步 HTTP (callback/asyncio.Future) |
 | TLM DMI | mmap / kernel bypass |
 | TLM Extension | 自訂 HTTP Header |
 | sc_module | class / component |
 | sc_port | dependency injection |
 | sc_signal | Observable / reactive variable |
-| SC_THREAD | coroutine / goroutine |
+| SC_THREAD | coroutine / Python coroutine (asyncio) |
 | SC_METHOD | event callback |
-| sc_event | condition variable / Promise |
+| sc_event | condition variable / asyncio.Future |
 | Delta cycle | microtask queue |

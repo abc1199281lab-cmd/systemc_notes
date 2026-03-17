@@ -110,7 +110,7 @@ graph LR
 | `sc_time` | `Duration` / `time.Duration` | 表示模擬時間（如 100 ns） |
 | `wait(time)` | `time.sleep()` / `Thread.sleep()` | 模擬經過指定時間 |
 | `sc_time_stamp()` | `System.currentTimeMillis()` | 取得目前模擬時間 |
-| `sc_channel` | `BlockingQueue` 的底層實作 | FIFO 同時實作讀寫介面 |
+| `sc_channel` | `queue.Queue` 的底層實作 | FIFO 同時實作讀寫介面 |
 | `sc_event` | `Condition.notify()` | 協調 producer 和 consumer 的阻塞/喚醒 |
 
 ## 學習路徑建議

@@ -1,7 +1,7 @@
 # async_suspend.cpp -- 主程式
 
 > **原始碼**: `ref/systemc/examples/sysc/async_suspend/async_suspend.cpp`
-> **難度**: 進階 | **軟體類比**: Node.js cluster 中多個 worker 透過 event loop 協調
+> **難度**: 進階 | **軟體類比**: Python asyncio 中多個 worker thread 透過 event loop 協調
 
 ## 概述
 
@@ -62,7 +62,7 @@ sc_vector<asynctestnode> nodes("nodes", NODES,
 
 `sc_vector` 是 SystemC 的容器，類似 `std::vector` 但物件具有 SystemC 的層級名稱管理。lambda 作為 factory function，為每個元素提供自訂的建構邏輯。
 
-**軟體類比**: Spring 的 `@Bean` 搭配 `@Scope("prototype")`，每次呼叫都建立新實例。
+**軟體類比**: Python 的 dependency injection (inject library) 搭配 provider scope，每次呼叫都建立新實例。
 
 #### 4. 全連接拓撲
 

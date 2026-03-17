@@ -144,18 +144,21 @@ sequenceDiagram
 
 ### 軟體類比
 
-```javascript
-// Node.js 事件模型 = 中斷模型
-process.on('SIGINT', () => {    // 註冊中斷處理程式
-    console.log('收到中斷');     // 執行 ISR
-    cleanup();                   // 處理事件
-    process.exit(0);             // 返回
-});
+```python
+# Python asyncio 事件模型 = 中斷模型
+import signal
+import sys
 
-// 主程式持續執行，直到 signal 觸發
-while (true) {
-    doWork();  // CPU 正常執行指令
-}
+def sigint_handler(signum, frame):  # 註冊中斷處理程式
+    print('收到中斷')               # 執行 ISR
+    cleanup()                       # 處理事件
+    sys.exit(0)                     # 返回
+
+signal.signal(signal.SIGINT, sigint_handler)
+
+# 主程式持續執行，直到 signal 觸發
+while True:
+    do_work()  # CPU 正常執行指令
 ```
 
 ### 中斷 vs 輪詢 (Polling)

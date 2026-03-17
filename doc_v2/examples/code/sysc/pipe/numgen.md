@@ -8,7 +8,7 @@
 
 在軟體世界中，這類似於：
 - Python 的 generator function（每次 `yield` 一組值）
-- Node.js 的 Readable stream（每次 `push` 一筆資料）
+- Python 的 asyncio StreamReader（每次 `read` 一筆資料）
 - Kafka producer（每個間隔送出一筆 event）
 
 ```python
@@ -58,16 +58,17 @@ void numgen::entry() {
 
 `SC_METHOD(entry)` 告訴 SystemC：「每次指定的 sensitivity 事件發生時，呼叫 `entry()` 函式。」
 
-這和 JavaScript 的 `addEventListener` 非常相似：
+這和 Python 的 callback 註冊非常相似：
 
-```javascript
-// JavaScript 類比
-clock.addEventListener('posedge', () => {
-    output1 = a;
-    output2 = b;
-    a -= 1.5;
-    b -= 2.8;
-});
+```python
+# Python 類比
+def on_posedge():
+    output1 = a
+    output2 = b
+    a -= 1.5
+    b -= 2.8
+
+clock.on_posedge(on_posedge)
 ```
 
 重要限制：SC_METHOD **不能**呼叫 `wait()`。它必須在一次呼叫內完成所有工作並返回。如果你需要在中途暫停，請改用 SC_THREAD。
@@ -96,7 +97,7 @@ end
 
 | | SC_METHOD | SC_THREAD |
 |---|---|---|
-| 類比 | callback / event handler | coroutine / goroutine |
+| 類比 | callback / event handler | coroutine / Python coroutine (asyncio) |
 | 執行 | 每次觸發從頭到尾 | 可用 `wait()` 暫停 |
 | `wait()` | **禁止** | 允許 |
 | 狀態 | 用成員變數保存（如 `a`, `b`） | 用 local 變數 + `wait()` |

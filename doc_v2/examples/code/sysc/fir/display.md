@@ -56,7 +56,7 @@ if (counter >= 24) {
 |---------|------|
 | `sc_stop()` | `process.exit()` 或測試框架中的 `done()` |
 | 模擬繼續運行 | event loop 繼續運行 |
-| 所有模組同時停止 | 所有 goroutine / thread 同時結束 |
+| 所有模組同時停止 | 所有 Python coroutine (asyncio) / thread 同時結束 |
 
 ### 為什麼是 24 個結果？
 

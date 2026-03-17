@@ -15,26 +15,33 @@
 
 ## 軟體類比：State Machine Pattern
 
-如果你用過 Redux，`fir_fsm` 就像一個 **reducer**：
+如果你用過 state machine pattern，`fir_fsm` 就像一個 **state machine pattern (like Python enum + match)**：
 
-```javascript
-// 概念上等同的 Redux reducer
-function firReducer(state, action) {
-    switch (state) {
-        case 'RESET':
-            return 'FIRST';
-        case 'FIRST':
-            if (action.type === 'INPUT_VALID')
-                return 'SECOND';  // start processing
-            return 'FIRST';       // keep waiting
-        case 'SECOND':
-            return 'THIRD';
-        case 'THIRD':
-            return 'OUTPUT';
-        case 'OUTPUT':
-            return 'FIRST';       // done, go back to waiting
-    }
-}
+```python
+# 概念上等同的 state machine pattern (Python enum + match)
+from enum import Enum
+
+class State(Enum):
+    RESET = 0
+    FIRST = 1
+    SECOND = 2
+    THIRD = 3
+    OUTPUT = 4
+
+def fir_next_state(state: State, input_valid: bool) -> State:
+    match state:
+        case State.RESET:
+            return State.FIRST
+        case State.FIRST:
+            if input_valid:
+                return State.SECOND  # start processing
+            return State.FIRST       # keep waiting
+        case State.SECOND:
+            return State.THIRD
+        case State.THIRD:
+            return State.OUTPUT
+        case State.OUTPUT:
+            return State.FIRST       # done, go back to waiting
 ```
 
 每個狀態對應一個「步驟」，每個 clock cycle 前進一步。
@@ -132,7 +139,7 @@ sequenceDiagram
 
 | 硬體概念 | 軟體概念 |
 |---------|---------|
-| FSM（控制器） | Controller / State machine / Redux store |
+| FSM（控制器） | Controller / State machine / state machine pattern (like Python enum + match) |
 | Datapath（資料路徑） | Model / Service / 業務邏輯 |
 | FSM + Datapath | MVC 架構中的 C + M |
 

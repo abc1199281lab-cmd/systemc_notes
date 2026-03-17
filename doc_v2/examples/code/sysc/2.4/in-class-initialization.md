@@ -1,7 +1,7 @@
 # In-Class Initialization -- 類別內初始化巨集
 
 > **原始碼**: `ref/systemc/examples/sysc/2.4/in_class_initialization/`
-> **難度**: 中級 | **軟體類比**: Spring `@Autowired` / Java field initialization / Kotlin 的 `by lazy`
+> **難度**: 中級 | **軟體類比**: dependency injection (like Python's inject library) / Python field initialization / Python `@cached_property`
 
 ## 概述
 
@@ -27,9 +27,8 @@ sc_vector<sc_in<int>> SC_NAMED(din, N_INPUTS); // 名稱自動為 "din"，帶參
 ```
 
 **軟體類比**:
-- **Spring**: `@Component` 不指定名稱時，自動用類別名
 - **Python dataclass**: `field(default=...)` 自動從變數名推導
-- **Kotlin**: `val name: String` 自動成為 property 名稱
+- **C++ structured bindings**: 自動從成員名稱推導
 
 ### 2. `SC_NAMED_WITH_INIT` -- 宣告加初始化
 
@@ -45,16 +44,18 @@ adder_tester<T, N_INPUTS> SC_NAMED_WITH_INIT(tester_inst) {
 }
 ```
 
-**軟體類比**: 這就像 Spring 的 `@Bean` 方法，在宣告的同時完成配置：
+**軟體類比**: 這就像 Python 的 dependency injection，在宣告的同時完成配置：
 
-```java
-@Bean
-public DataSource dataSource() {
-    var ds = new HikariDataSource();
-    ds.setUrl("jdbc:...");
-    ds.setUsername("...");
-    return ds;
-}
+```python
+# Python inject library
+import inject
+
+@inject.autoparams()
+def configure_datasource() -> DataSource:
+    ds = DataSource()
+    ds.url = "jdbc:..."
+    ds.username = "..."
+    return ds
 ```
 
 ### 3. `SC_METHOD_IMP` -- 類別內 Method 宣告
@@ -78,13 +79,14 @@ SC_CTOR(adder) {
 
 **軟體類比**: 從「命令式註冊」變成「宣告式註冊」：
 
-```java
-// 命令式（舊）
-scheduler.register(this::addMethod, trigger);
+```python
+# 命令式（舊）
+scheduler.register(add_method, trigger)
 
-// 宣告式（新）
-@Scheduled(fixedRate = 1000)
-void addMethod() { ... }
+# 宣告式（新）
+@scheduler.scheduled(interval=1.0)
+def add_method():
+    ...
 ```
 
 ### 4. `SC_THREAD_IMP` 和 `SC_CTHREAD_IMP`
@@ -137,13 +139,11 @@ void adder<T,N_INPUTS>::add_method() {
 
 **軟體類比**: 這就像一個 reactive 的 computed property：
 
-```javascript
-// Vue.js
-computed: {
-    result() {
-        return this.inputs.reduce((sum, val) => sum + val, 0);
-    }
-}
+```python
+# Python property 類比
+@property
+def result(self):
+    return sum(self.inputs)
 ```
 
 只要任何一個 `din` 改變，`add_method` 就會重新計算並更新 `res`。
@@ -174,8 +174,8 @@ classDiagram
 
 | 優點 | 說明 | 軟體類比 |
 | --- | --- | --- |
-| 編譯隔離 | 修改 `adder.h` 不需要重新編譯使用 `adder_int_5_pimpl.h` 的檔案 | Java interface vs implementation |
-| 隱藏依賴 | 使用者不需要 include `adder.h` | Go 的 unexported type |
+| 編譯隔離 | 修改 `adder.h` 不需要重新編譯使用 `adder_int_5_pimpl.h` 的檔案 | C++ abstract class / Python ABC vs implementation |
+| 隱藏依賴 | 使用者不需要 include `adder.h` | Python 的 `_` 前綴私有慣例 |
 | 二進位相容 | 修改實作不影響 ABI | 動態連結庫的穩定 API |
 
 **Header 檔** (`adder_int_5_pimpl.h`):

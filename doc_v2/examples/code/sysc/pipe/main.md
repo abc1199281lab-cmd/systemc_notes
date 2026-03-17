@@ -7,7 +7,7 @@
 `main.cpp` 的角色就像是：
 
 - **Docker Compose**：定義所有服務（模組），並指定它們之間的連接（網路）
-- **Spring Boot Application**：建立所有 bean（模組），注入 dependency（port binding）
+- **Python dependency injection**：建立所有元件（模組），注入 dependency（port binding）
 - **Makefile**：定義所有元件和它們的依賴關係
 
 ```yaml
@@ -144,14 +144,13 @@ sc_clock clk("clk", 20, SC_NS);  // 自動產生 20ns 週期的 clock
 
 這類似於遊戲引擎的 `tick()` 或事件迴圈的 `processEvents()`：
 
-```javascript
-// JavaScript 類比
-for (let i = 0; i < 50; i++) {
-    clock = 1;
-    eventLoop.runFor(10);  // 處理所有 pending events
-    clock = 0;
-    eventLoop.runFor(10);
-}
+```python
+# Python 類比
+for i in range(50):
+    clock = 1
+    event_loop.run_for(10)  # 處理所有 pending events
+    clock = 0
+    event_loop.run_for(10)
 ```
 
 ## 完整的模擬流程

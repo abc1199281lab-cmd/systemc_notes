@@ -1,6 +1,6 @@
 # async_suspend -- 非同步暫停與外部執行緒整合
 
-> **難度**: 進階 | **軟體類比**: Node.js libuv event loop 整合 native threads | **原始碼**: `ref/systemc/examples/sysc/async_suspend/`
+> **難度**: 進階 | **軟體類比**: Python asyncio event loop 整合 native threads | **原始碼**: `ref/systemc/examples/sysc/async_suspend/`
 
 ## 概述
 
@@ -8,7 +8,7 @@
 
 ### 對軟體工程師的解釋
 
-想像你正在建構一個 **Node.js 應用**，其中：
+想像你正在建構一個 **Python asyncio 應用**，其中：
 - **event loop**（SystemC kernel）是單執行緒的，負責排程所有事件
 - 你有 **10 個 worker threads**（`asynctestnode` 中的 `std::thread`），各自做耗時的計算
 - worker 完成後要把結果送回 event loop 處理
@@ -16,13 +16,13 @@
 
 這個範例用到的 SystemC 新 API：
 
-| API | 作用 | Node.js 類比 |
+| API | 作用 | Python asyncio 類比 |
 | --- | --- | --- |
-| `async_event::notify()` | 從外部執行緒安全地觸發事件 | `napi_threadsafe_function` |
-| `async_attach_suspending()` | 告訴 kernel 不要提早結束 | `ref()` 保持 event loop 活躍 |
-| `sc_suspend_all()` | 暫停整個 SystemC 模擬 | `uv_async_send` + 暫停 loop |
-| `sc_unsuspend_all()` | 恢復模擬 | 恢復 loop |
-| `sc_unsuspendable()` | 標記目前的程式碼區段不可被暫停 | `process.nextTick` 的不可中斷保證 |
+| `async_event::notify()` | 從外部執行緒安全地觸發事件 | `loop.call_soon_threadsafe()` |
+| `async_attach_suspending()` | 告訴 kernel 不要提早結束 | `loop.create_future()` 保持 event loop 活躍 |
+| `sc_suspend_all()` | 暫停整個 SystemC 模擬 | `loop.stop()` 暫停 loop |
+| `sc_unsuspend_all()` | 恢復模擬 | `loop.run_forever()` 恢復 loop |
+| `sc_unsuspendable()` | 標記目前的程式碼區段不可被暫停 | 在 coroutine 中不含 `await` 的原子區段 |
 | `sc_suspendable()` | 恢復可暫停狀態 | 回到正常排程 |
 
 ## 檔案列表

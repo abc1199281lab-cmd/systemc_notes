@@ -1,14 +1,14 @@
 # sc_report -- 報告與訊息系統
 
-> **難度**: 中級 | **軟體類比**: Logging framework (log4j, Python logging, Go slog) | **原始碼**: `ref/systemc/examples/sysc/2.1/sc_report/main.cpp`
+> **難度**: 中級 | **軟體類比**: Logging framework (Python logging, C++ spdlog) | **原始碼**: `ref/systemc/examples/sysc/2.1/sc_report/main.cpp`
 
 ## 概述
 
 `sc_report` 範例展示了 SystemC 的**報告系統（reporting system）**，它是一個功能完整的 logging framework。你可以依據**訊息 ID** 和**嚴重等級（severity）**來設定不同的處理動作（action），例如顯示、記錄、中斷模擬或呼叫自訂 handler。
 
-### 軟體類比：log4j / Python logging
+### 軟體類比：Python logging
 
-如果你用過 Java 的 log4j 或 Python 的 logging 模組，SystemC 的 `sc_report` 做的是完全一樣的事情：
+如果你用過 Python 的 logging 模組，SystemC 的 `sc_report` 做的是完全一樣的事情：
 
 ```python
 # Python logging 類比
@@ -23,13 +23,13 @@ handler = logging.StreamHandler()
 handler.addFilter(SeverityFilter(logging.ERROR))      # 依 severity 設定
 ```
 
-```java
-// log4j 類比
-Logger.getLogger("ID1").setLevel(Level.WARN);
-Logger.getLogger("ID2").setLevel(Level.ALL);
+```python
+# C++ spdlog 概念類比（用 Python logging 表達）
+logging.getLogger("ID1").setLevel(logging.WARNING)
+logging.getLogger("ID2").setLevel(logging.DEBUG)
 
-// 自訂 handler
-Logger.getLogger("ID3").addHandler(new CustomHandler());
+# 自訂 handler
+logging.getLogger("ID3").addHandler(CustomHandler())
 ```
 
 ## 架構圖
@@ -131,8 +131,8 @@ void allocate_user_actions()
 | `SC_LOG` | 寫入日誌 | `FileHandler` |
 | `SC_CACHE_REPORT` | 快取報告物件 | 保留在記憶體中 |
 | `SC_THROW` | 拋出 C++ exception | `throw` |
-| `SC_STOP` | 停止模擬 | `System.exit()` |
-| `SC_ABORT` | 立即中止（`abort()`） | `os.Exit(1)` |
+| `SC_STOP` | 停止模擬 | `sys.exit()` |
+| `SC_ABORT` | 立即中止（`abort()`） | `os._exit(1)` |
 
 `get_new_action_id()` 讓你可以分配額外的自訂 action（用在自訂 handler 中辨識）。
 
@@ -196,7 +196,7 @@ void set_rules()
 2. **id 規則** -- 對某個 id 的所有 severity
 3. **severity 規則** -- 全域的嚴重等級設定
 
-這跟 log4j 的 Logger 繼承階層類似：具體的 logger 設定覆蓋父層級的設定。
+這跟 Python logging 的 Logger 繼承階層類似：具體的 logger 設定覆蓋父層級的設定。
 
 ### Suppress 和 Force
 

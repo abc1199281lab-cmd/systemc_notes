@@ -6,7 +6,7 @@
 
 效能建模（Performance Modeling）就是在**實際建造之前**，用軟體模擬來預測系統的效能表現。
 
-**軟體類比**：假設你要設計一個高併發 API server。你不會直接買 100 台伺服器然後祈禱夠用。你會先用 load testing 工具（如 k6、JMeter）模擬預期流量，找出最佳的伺服器數量、thread pool 大小、connection pool 上限等參數。
+**軟體類比**：假設你要設計一個高併發 API server。你不會直接買 100 台伺服器然後祈禱夠用。你會先用 load testing 工具（如 k6、Python locust）模擬預期流量，找出最佳的伺服器數量、thread pool 大小、connection pool 上限等參數。
 
 硬體設計師做的事完全一樣，只是他們的「伺服器」是晶片上的 buffer、FIFO、cache，而這些東西一旦做出來就不能改了（不像軟體可以隨時 scale up）。
 

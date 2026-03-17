@@ -240,7 +240,7 @@ graph TB
 
 The interconnect matrix allows **simultaneous transfers** to different slaves: Master 1 talks to Slave 1 while Master 2 talks to Slave 2. Contention only occurs when two masters want the same slave.
 
-**Software analogy:** A shared bus is a single-threaded event loop (Node.js). A multi-layer bus is a thread pool where parallel requests can hit different backends simultaneously.
+**Software analogy:** A shared bus is a single-threaded event loop (Python asyncio event loop). A multi-layer bus is a thread pool where parallel requests can hit different backends simultaneously.
 
 ---
 

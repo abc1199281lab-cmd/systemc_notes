@@ -1,6 +1,6 @@
 # scx_mutex_w_policy -- 帶策略的互斥鎖
 
-> **難度**: 中級 | **軟體類比**: `ReentrantLock(fair=true)` (Java) / Mutex with fairness policy | **原始碼**: `ref/systemc/examples/sysc/2.1/scx_mutex_w_policy/scx_mutex_w_policy.cpp`
+> **難度**: 中級 | **軟體類比**: `Python threading.Lock` with fairness policy | **原始碼**: `ref/systemc/examples/sysc/2.1/scx_mutex_w_policy/scx_mutex_w_policy.cpp`
 
 ## 概述
 
@@ -10,16 +10,16 @@
 
 ### 軟體類比：公平鎖 vs 非公平鎖
 
-```java
-// Java 類比
-// 公平鎖：先來的 thread 先取得鎖
-Lock fairLock = new ReentrantLock(true);
+```python
+# Python 類比
+import threading
 
-// 非公平鎖（預設）：不保證順序
-Lock unfairLock = new ReentrantLock(false);
+# Python 的 threading.Lock 不提供公平性保證
+lock = threading.Lock()
+
+# 若需要公平鎖（FIFO），需要自行實作（例如用 queue.Queue 搭配 Lock）
+# scx_mutex_w_policy 讓你明確選擇 FIFO 或 RANDOM 策略
 ```
-
-在 Go 中，`sync.Mutex` 預設是有一定公平性的（Go 1.9 之後的 starvation mode），但你無法選擇策略。`scx_mutex_w_policy` 讓你明確選擇。
 
 ## 架構圖
 
@@ -227,7 +227,7 @@ t3 got mutex at 21 ns   // t2 解鎖後，t3 是佇列中唯一等的
 | Starvation | 不會發生 | 理論上可能（但機率低） |
 | 適用場景 | 需要保證順序的協定 | 模擬真實硬體的不確定仲裁 |
 | 效能考量 | 可預測，方便除錯 | 更接近真實硬體行為 |
-| 軟體類比 | `ReentrantLock(true)` | `ReentrantLock(false)` |
+| 軟體類比 | `Python threading.Lock` (FIFO wrapper) | `Python threading.Lock` (default) |
 
 ## 設計理念
 

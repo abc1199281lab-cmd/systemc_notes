@@ -45,11 +45,11 @@
 | `sc_module` | class / component | 可重用的硬體模組 |
 | `sc_port` | dependency injection interface | 模組的對外連接點 |
 | `sc_signal` | Observable / reactive variable | 帶有變更通知的訊號線 |
-| `SC_THREAD` | coroutine / goroutine | 有自己的執行流程，可以暫停與恢復 |
+| `SC_THREAD` | coroutine / Python coroutine (asyncio) | 有自己的執行流程，可以暫停與恢復 |
 | `SC_METHOD` | event callback | 被事件觸發時執行一次，不能暫停 |
-| `sc_event` | condition variable / Promise | 用來通知「某件事發生了」 |
+| `sc_event` | condition variable / asyncio.Future | 用來通知「某件事發生了」 |
 | `sc_channel` | typed communication pipe | 帶協議的通訊管道 |
-| `sc_interface` | abstract interface (Java interface) | 定義通訊協議的純虛擬介面 |
+| `sc_interface` | C++ abstract class / Python ABC | 定義通訊協議的純虛擬介面 |
 
 以下我們逐一展開。
 
@@ -114,7 +114,7 @@ flowchart LR
     C_PORT -->|"綁定"| IMPL
 ```
 
-**關鍵觀念**：module 之間永遠不直接通訊。它們透過 port 連接到 channel，channel 實作了特定的 interface。這就像 Spring Framework 的 `@Autowired` -- 模組只知道介面，不知道具體實作。
+**關鍵觀念**：module 之間永遠不直接通訊。它們透過 port 連接到 channel，channel 實作了特定的 interface。這就像 dependency injection (like Python's inject library) 的 `@inject` -- 模組只知道介面，不知道具體實作。
 
 ---
 
@@ -147,15 +147,15 @@ sequenceDiagram
 
 ---
 
-## SC_THREAD -- 協程 / Goroutine
+## SC_THREAD -- 協程 / Python Coroutine
 
 `SC_THREAD` 是一個有自己執行流程的 process。它可以在執行途中暫停（`wait()`），等待某個事件後繼續執行。
 
 **軟體對應**：
 
-- **Go 的 goroutine**：獨立的輕量級執行流程
+- **Python 的 asyncio coroutine**：獨立的輕量級執行流程
 - **Python 的 async/await**：`wait()` 就是 `await`
-- **JavaScript 的 generator function**：`yield` 暫停，之後繼續
+- **C++ 的 coroutine (C++20)**：`co_await` 暫停，之後繼續
 
 ```mermaid
 sequenceDiagram
@@ -206,19 +206,19 @@ flowchart LR
 | 執行方式 | 像 coroutine，有狀態 | 像 callback，無狀態 |
 | 記憶體開銷 | 較大（需要 stack） | 較小（不需要 stack） |
 | 適合場景 | 複雜的多步驟流程 | 簡單的組合邏輯、狀態轉移 |
-| 軟體類比 | goroutine / async function | event handler / callback |
+| 軟體類比 | Python coroutine (asyncio) / async function | event handler / callback |
 
 ---
 
-## sc_event -- 條件變數 / Promise
+## sc_event -- 條件變數 / asyncio.Future
 
 `sc_event` 是 SystemC 中最基礎的同步機制。它代表「某件事情發生了」。
 
 **軟體對應**：
 
 - **pthread 的 condition variable**：`pthread_cond_signal` / `pthread_cond_wait`
-- **JavaScript 的 Promise resolve**：事件觸發時，等待的 thread 被喚醒
-- **Go 的 channel 發送**：解除另一端的阻塞
+- **Python 的 asyncio.Future set_result**：事件觸發時，等待的 thread 被喚醒
+- **Python 的 queue.Queue put**：解除另一端的阻塞
 
 ```mermaid
 sequenceDiagram
@@ -237,7 +237,7 @@ sequenceDiagram
 
 | 呼叫方式 | 生效時機 | 軟體類比 |
 |---------|---------|---------|
-| `e.notify()` | 立即（同一 delta cycle） | `Promise.resolve()` 放入 microtask queue |
+| `e.notify()` | 立即（同一 delta cycle） | `loop.call_soon()` 放入 callback queue |
 | `e.notify(SC_ZERO_TIME)` | 下一個 delta cycle | `setTimeout(fn, 0)` |
 | `e.notify(10, SC_NS)` | 10 奈秒後 | `setTimeout(fn, 10)` |
 
@@ -249,7 +249,7 @@ sequenceDiagram
 
 **軟體對應**：
 
-- `sc_interface` = Java interface / Go interface / C++ abstract class
+- `sc_interface` = C++ abstract class / Python ABC
 - `sc_channel` = 該 interface 的具體實作
 
 ```mermaid
@@ -294,7 +294,7 @@ classDiagram
 
 ## Simulation Kernel -- 事件迴圈
 
-SystemC 的 simulation kernel 就是一個事件迴圈（event loop），和 Node.js 的事件迴圈幾乎是相同的概念。
+SystemC 的 simulation kernel 就是一個事件迴圈（event loop），和 Python asyncio event loop 幾乎是相同的概念。
 
 ```mermaid
 flowchart TD
@@ -316,15 +316,15 @@ flowchart TD
     TIME -->|"否"| END
 ```
 
-**與 Node.js event loop 的對比**：
+**與 Python asyncio event loop 的對比**：
 
-| 概念 | Node.js | SystemC |
+| 概念 | Python asyncio | SystemC |
 |------|---------|---------|
 | 事件迴圈 | Event Loop | Simulation Kernel |
 | 回調佇列 | Callback Queue | 待執行的 SC_METHOD |
-| 微任務 | Microtask Queue | Delta Cycle |
-| 定時器 | setTimeout | timed event (wait 10 ns) |
-| I/O 回調 | fs.readFile callback | SC_THREAD 被 event 喚醒 |
+| 微任務 | call_soon queue | Delta Cycle |
+| 定時器 | call_later | timed event (wait 10 ns) |
+| I/O 回調 | add_reader callback | SC_THREAD 被 event 喚醒 |
 
 ---
 

@@ -1,6 +1,6 @@
 # scx_barrier -- 屏障同步
 
-> **難度**: 入門 | **軟體類比**: `CyclicBarrier` (Java) / `sync.WaitGroup` (Go) / `pthread_barrier` | **原始碼**: `ref/systemc/examples/sysc/2.1/scx_barrier/scx_barrier.h`, `ref/systemc/examples/sysc/2.1/scx_barrier/main.cpp`
+> **難度**: 入門 | **軟體類比**: `Python threading.Barrier` / `pthread_barrier` | **原始碼**: `ref/systemc/examples/sysc/2.1/scx_barrier/scx_barrier.h`, `ref/systemc/examples/sysc/2.1/scx_barrier/main.cpp`
 
 ## 概述
 
@@ -16,33 +16,30 @@
 
 在程式中：
 
-```java
-// Java CyclicBarrier 類比
-CyclicBarrier barrier = new CyclicBarrier(3);
+```python
+# Python threading.Barrier 類比
+import threading
 
-// Thread A
-Thread.sleep(5);
-barrier.await();  // 到達，等待
-System.out.println("A proceeds");
+barrier = threading.Barrier(3)
 
-// Thread B
-Thread.sleep(11);
-barrier.await();  // 到達，等待
-System.out.println("B proceeds");
+# Thread A
+def thread_a():
+    time.sleep(0.005)
+    barrier.wait()  # 到達，等待
+    print("A proceeds")
 
-// Thread C（最快到達）
-barrier.await();  // 到達，等待
-System.out.println("C proceeds");
+# Thread B
+def thread_b():
+    time.sleep(0.011)
+    barrier.wait()  # 到達，等待
+    print("B proceeds")
 
-// 全部在 11ms 後同時印出
-```
+# Thread C（最快到達）
+def thread_c():
+    barrier.wait()  # 到達，等待
+    print("C proceeds")
 
-```go
-// Go sync.WaitGroup 類比（語義略有不同但概念相似）
-var wg sync.WaitGroup
-wg.Add(3)
-// 每個 goroutine 完成後呼叫 wg.Done()
-// 主 goroutine 呼叫 wg.Wait() 等待全部完成
+# 全部在最慢的 thread 到達後同時印出
 ```
 
 ## 架構圖
@@ -179,13 +176,13 @@ SC_MODULE(X)
 
 ## 與軟體同步原語的比較
 
-| 特性 | `scx_barrier` | Java `CyclicBarrier` | Go `sync.WaitGroup` | `pthread_barrier` |
-| --- | --- | --- | --- | --- |
-| 初始化 | `initialize(n)` | `new CyclicBarrier(n)` | `wg.Add(n)` | `pthread_barrier_init(&b, n)` |
-| 等待 | `wait()` | `await()` | `wg.Wait()` (不同語義) | `pthread_barrier_wait()` |
-| 可重用 | 否（一次性） | 是（自動重置） | 是 | 是 |
-| 到達通知 | 隱含在 `wait()` | 隱含在 `await()` | `wg.Done()` | 隱含在 `wait()` |
-| 超時支援 | 透過 SystemC `wait(event, time)` | `await(timeout)` | 無直接支援 | 無 |
+| 特性 | `scx_barrier` | Python `threading.Barrier` | `pthread_barrier` |
+| --- | --- | --- | --- |
+| 初始化 | `initialize(n)` | `threading.Barrier(n)` | `pthread_barrier_init(&b, n)` |
+| 等待 | `wait()` | `barrier.wait()` | `pthread_barrier_wait()` |
+| 可重用 | 否（一次性） | 是（自動重置） | 是 |
+| 到達通知 | 隱含在 `wait()` | 隱含在 `wait()` | 隱含在 `wait()` |
+| 超時支援 | 透過 SystemC `wait(event, time)` | `barrier.wait(timeout)` | 無 |
 
 ## 設計理念
 
@@ -199,6 +196,6 @@ SC_MODULE(X)
 
 ### 這個實作的限制
 
-- **一次性使用**: 計數器歸零後不會自動重置，不像 Java 的 `CyclicBarrier`
+- **一次性使用**: 計數器歸零後不會自動重置，不像 Python 的 `threading.Barrier`
 - **非 channel**: `scx_barrier` 不是 `sc_channel`，不能透過 port 連接
 - **非正式標準**: `scx_` 前綴表示這是一個擴充（extension），不是 SystemC 標準的一部分

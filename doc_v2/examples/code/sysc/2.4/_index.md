@@ -8,42 +8,38 @@ SystemC 2.4 引入了一系列便捷巨集，讓模組的埠宣告、process 註
 
 ### 對軟體工程師的解釋
 
-如果你用過 **Spring Framework**，你會發現 SystemC 2.4 之前的寫法就像是「所有依賴注入都寫在建構子裡」：
+如果你用過**依賴注入（像 Python 的 inject library）**，你會發現 SystemC 2.4 之前的寫法就像是「所有依賴注入都寫在建構子裡」：
 
-```java
-// 舊寫法（所有初始化在建構子）
-class Service {
-    private final Repository repo;
-    private final Logger logger;
-
-    public Service(Repository repo, Logger logger) {
-        this.repo = repo;
-        this.logger = logger;
-        // 還要設定很多東西...
-    }
-}
+```python
+# 舊寫法（所有初始化在建構子）
+class Service:
+    def __init__(self, repo: Repository, logger: Logger):
+        self.repo = repo
+        self.logger = logger
+        # 還要設定很多東西...
 ```
 
 而 SystemC 2.4 的新巨集讓你可以用「field injection」的風格：
 
-```java
-// 新寫法（宣告時直接初始化）
-class Service {
-    @Autowired Repository repo;
-    @Autowired Logger logger;
-    // 乾淨多了！
-}
+```python
+# 新寫法（宣告時直接初始化）
+import inject
+
+class Service:
+    repo: Repository = inject.attr(Repository)
+    logger: Logger = inject.attr(Logger)
+    # 乾淨多了！
 ```
 
 ## 新增巨集總覽
 
 | 巨集 | 用途 | 軟體類比 |
 | --- | --- | --- |
-| `SC_NAMED(name, ...)` | 用變數名自動命名 sc_object，可帶額外參數 | `@Component("myBean")` |
-| `SC_NAMED_WITH_INIT(name)` | 宣告並附帶初始化程式碼區塊 | `@PostConstruct` 初始化 |
-| `SC_METHOD_IMP(func, init)` | 在類別內宣告 SC_METHOD 並指定初始化（sensitivity 等） | `@Scheduled` 註解 |
-| `SC_THREAD_IMP(func, init)` | 在類別內宣告 SC_THREAD 並指定初始化 | `@Async` 註解 |
-| `SC_CTHREAD_IMP(func, edge, init)` | 在類別內宣告 SC_CTHREAD 並指定時脈邊緣和初始化 | `@Scheduled(fixedRate=...)` |
+| `SC_NAMED(name, ...)` | 用變數名自動命名 sc_object，可帶額外參數 | Python `dataclasses.field()` 自動命名 |
+| `SC_NAMED_WITH_INIT(name)` | 宣告並附帶初始化程式碼區塊 | Python `__post_init__()` 初始化 |
+| `SC_METHOD_IMP(func, init)` | 在類別內宣告 SC_METHOD 並指定初始化（sensitivity 等） | Python decorator 註冊 |
+| `SC_THREAD_IMP(func, init)` | 在類別內宣告 SC_THREAD 並指定初始化 | Python `@asyncio.coroutine` 風格 |
+| `SC_CTHREAD_IMP(func, edge, init)` | 在類別內宣告 SC_CTHREAD 並指定時脈邊緣和初始化 | Python `@sched.scheduled(interval=...)` |
 
 ## 檔案列表
 

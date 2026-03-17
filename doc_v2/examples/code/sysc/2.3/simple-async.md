@@ -1,7 +1,7 @@
 # simple_async -- 簡易非同步事件
 
 > **原始碼**: `ref/systemc/examples/sysc/2.3/simple_async/async_event.h`, `ref/systemc/examples/sysc/2.3/simple_async/main.cpp`
-> **難度**: 中級 | **軟體類比**: async/await 跨執行緒通知 / Node.js `setImmediate` 從 worker thread
+> **難度**: 中級 | **軟體類比**: async/await 跨執行緒通知 / Python `asyncio loop.call_soon_threadsafe()` 從 worker thread
 
 ## 概述
 
@@ -9,20 +9,18 @@
 
 ### 對軟體工程師的解釋
 
-SystemC 的模擬引擎就像 **Node.js 的 event loop**：
+SystemC 的模擬引擎就像 **Python asyncio event loop**：
 - 它是單執行緒的
 - 所有模組的 `SC_THREAD`/`SC_METHOD` 都在同一個執行緒中協作執行
-- 你不能從外部直接修改它的狀態（就像你不能從 worker thread 直接操作 DOM）
+- 你不能從外部直接修改它的狀態（就像你不能從 worker thread 直接操作 event loop 的狀態）
 
 `async_event` 解決的問題就是：**如何從 worker thread 安全地往 event loop 投遞一個事件？**
 
 | 框架 | 等價機制 |
 | --- | --- |
-| Node.js | 從 native addon 呼叫 `napi_threadsafe_function` |
 | Python asyncio | `loop.call_soon_threadsafe()` |
 | Qt | `QMetaObject::invokeMethod()` with `Qt::QueuedConnection` |
-| Go | 從 goroutine 寫入 channel，main goroutine 用 `select` 接收 |
-| Java Swing | `SwingUtilities.invokeLater()` |
+| C++ (Boost.Asio) | `io_context::post()` 從外部執行緒投遞 handler |
 
 ## async_event 類別解析
 
@@ -88,7 +86,7 @@ sequenceDiagram
 
 建構子中呼叫了 `async_attach_suspending()`。這告訴 SystemC kernel：「即使目前沒有排定的事件，也不要結束模擬，因為可能還有外部事件會進來。」
 
-**軟體類比**: Node.js 中，只要有活躍的 timer 或 socket，event loop 就不會退出。`async_attach_suspending()` 就像呼叫 `ref()` 讓 event loop 保持活躍。
+**軟體類比**: Python asyncio 中，只要有活躍的 task 或 future，event loop 就不會退出。`async_attach_suspending()` 就像建立一個未完成的 `asyncio.Future` 讓 event loop 保持活躍。
 
 ## main.cpp 解析
 

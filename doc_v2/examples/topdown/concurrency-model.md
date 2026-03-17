@@ -9,7 +9,7 @@
 
 硬體中的元件是真正同時運作的 -- 當 CPU 在執行指令時，記憶體控制器同時在處理讀取、DMA 同時在搬運資料。但 SystemC 跑在一般的 x86 電腦上，用的是標準的 C++ 執行環境。
 
-SystemC 的解法是**協作式多工（cooperative multitasking）** -- 和 Python asyncio、JavaScript event loop、Go 的 goroutine scheduler 本質上是同一件事。
+SystemC 的解法是**協作式多工（cooperative multitasking）** -- 和 Python asyncio event loop 本質上是同一件事。
 
 ```mermaid
 flowchart TB
@@ -42,7 +42,7 @@ flowchart TB
 | 需要 mutex | 是（共享資料可能被搶占） | 否（任一時刻只有一個在跑） |
 | Race condition | 常見問題 | 不存在（單 thread） |
 | Deadlock | 可能發生 | 不會（但可能 livelock） |
-| 類似技術 | OS thread、Java Thread | Python asyncio、Node.js、Go goroutine |
+| 類似技術 | OS thread、C++ std::thread | Python asyncio、Python coroutine (asyncio) |
 
 **關鍵觀念**：在 SystemC 中，你永遠不需要寫 `mutex_lock()` 來保護共享資料。因為在任何一個時間點，只有一個 process 在執行。只有當你主動呼叫 `wait()` 時，控制權才會交回給 kernel。
 
@@ -73,9 +73,7 @@ stateDiagram-v2
 | 語言 | 對應概念 |
 |------|---------|
 | Python | `async def` + `await` |
-| Go | goroutine |
-| JavaScript | `async function` + `await` |
-| Kotlin | coroutine |
+| C++ | `std::coroutine` (C++20) |
 
 **典型用法**：
 
@@ -205,17 +203,17 @@ void my_thread() {
 }
 ```
 
-**軟體對應**：`await` 不同的 Promise -- 每次 `await` 的對象可以不同。
+**軟體對應**：`await` 不同的 asyncio.Future -- 每次 `await` 的對象可以不同。
 
 ### 事件組合
 
 | SystemC 語法 | 軟體對應 | 意義 |
 |-------------|---------|------|
-| `wait(e1)` | `await promise1` | 等待單一事件 |
-| `wait(e1 & e2)` | `await Promise.all([p1, p2])` | 等待所有事件都發生 |
-| `wait(e1 \| e2)` | `await Promise.race([p1, p2])` | 等待任一事件發生 |
+| `wait(e1)` | `await future1` | 等待單一事件 |
+| `wait(e1 & e2)` | `await asyncio.gather(p1, p2)` | 等待所有事件都發生 |
+| `wait(e1 \| e2)` | `await asyncio.wait([p1, p2], return_when=FIRST_COMPLETED)` | 等待任一事件發生 |
 | `wait(10, SC_NS)` | `await sleep(10)` | 等待一段時間 |
-| `wait(10, SC_NS, e1)` | `await Promise.race([sleep(10), p1])` | 等待事件或超時 |
+| `wait(10, SC_NS, e1)` | `await asyncio.wait([sleep(10), p1], return_when=FIRST_COMPLETED)` | 等待事件或超時 |
 
 ---
 
@@ -315,7 +313,7 @@ gantt
     Delta 1 Update   : 11, 12
 ```
 
-**重點**：模擬時間在 delta cycle 之間**不會前進**。Delta cycle 發生在「零時間」內。這就像 JavaScript 的 microtask -- `Promise.resolve().then(...)` 在當前 task 結束前就會執行，不會等到下一個 event loop tick。
+**重點**：模擬時間在 delta cycle 之間**不會前進**。Delta cycle 發生在「零時間」內。這就像 Python asyncio 的 microtask -- `loop.call_soon(...)` 在當前 iteration 結束前就會執行，不會等到下一個 event loop tick。
 
 ---
 
@@ -325,7 +323,7 @@ SystemC 2.1 引入了動態建立 process 的能力。在此之前，所有 proc
 
 ### sc_spawn -- 動態建立 Process
 
-**軟體對應**：`go func(){}()` / `Task.Run(() => ...)` / `threading.Thread(target=fn).start()`
+**軟體對應**：`asyncio.create_task(fn())` / `threading.Thread(target=fn).start()`
 
 ```mermaid
 sequenceDiagram
@@ -353,12 +351,12 @@ sequenceDiagram
 
 **軟體對應**：
 
-| SystemC | Go | Java | JavaScript |
-|---------|-----|------|-----------|
-| `sc_spawn()` | `go func()` | `executor.submit()` | `new Promise()` |
-| `sc_process_handle` | `sync.WaitGroup` | `Future<T>` | `Promise` |
-| `wait(handle.terminated_event())` | `wg.Wait()` | `future.get()` | `await promise` |
-| Fork-Join all | 多個 `go` + `WaitGroup` | `invokeAll()` | `Promise.all()` |
+| SystemC | Python | C++ |
+|---------|--------|-----|
+| `sc_spawn()` | `asyncio.create_task()` | `std::async()` |
+| `sc_process_handle` | `asyncio.Task` | `std::future<T>` |
+| `wait(handle.terminated_event())` | `await task` | `future.get()` |
+| Fork-Join all | `asyncio.gather()` | 多個 `std::async` + `future.get()` |
 
 ```mermaid
 flowchart TD
@@ -382,7 +380,7 @@ flowchart TD
 
 Barrier 讓多個 process 在某個點同步 -- 所有 process 都到達 barrier 後，才一起繼續。
 
-**軟體對應**：`pthread_barrier_wait()` / `CyclicBarrier` (Java) / `sync.WaitGroup` (Go)
+**軟體對應**：`pthread_barrier_wait()` / `Python threading.Barrier`
 
 ```mermaid
 sequenceDiagram
@@ -411,7 +409,7 @@ sequenceDiagram
 
 ### sc_mutex
 
-**軟體對應**：`threading.Lock()` (Python) / `sync.Mutex` (Go)
+**軟體對應**：`threading.Lock()` (Python) / `std::mutex` (C++)
 
 用途：確保在同一模擬時間內，只有一個 process 使用某個共享資源。
 
@@ -499,13 +497,13 @@ flowchart TD
 
 ```mermaid
 flowchart LR
-    subgraph NodeJS["Node.js Event Loop"]
+    subgraph PythonAsyncio["Python asyncio Event Loop"]
         direction TB
-        N1["Timers<br/>(setTimeout)"]
+        N1["Timers<br/>(call_later)"]
         N2["I/O Callbacks"]
         N3["Idle / Prepare"]
         N4["Poll"]
-        N5["Check<br/>(setImmediate)"]
+        N5["Check<br/>(call_soon)"]
         N6["Close Callbacks"]
         N1 --> N2 --> N3 --> N4 --> N5 --> N6
     end

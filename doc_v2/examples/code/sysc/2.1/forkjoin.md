@@ -1,39 +1,43 @@
 # forkjoin -- Fork-Join 平行執行
 
-> **難度**: 中級 | **軟體類比**: `Promise.all()` / `CompletableFuture.allOf()` / goroutine group | **原始碼**: `ref/systemc/examples/sysc/2.1/forkjoin/forkjoin.cpp`
+> **難度**: 中級 | **軟體類比**: `Python asyncio.gather()` / `Python asyncio.Future` / Python coroutine group | **原始碼**: `ref/systemc/examples/sysc/2.1/forkjoin/forkjoin.cpp`
 
 ## 概述
 
 `forkjoin` 範例展示了 SystemC 2.1 的**動態 process 建立**（`sc_spawn`）和 **fork-join 平行執行模式**（`SC_FORK` / `SC_JOIN`）。這讓你可以在模擬執行期間動態建立多個 thread，並等待它們全部完成。
 
-### 軟體類比：Promise.all()
+### 軟體類比：Python asyncio.gather()
 
-在 JavaScript 中，當你需要平行發出多個 HTTP request 並等待全部完成：
+在 Python 中，當你需要平行發出多個非同步任務並等待全部完成：
 
-```javascript
-// JavaScript 類比
-const results = await Promise.all([
-    fetch('/api/task1'),
-    fetch('/api/task2'),
-    fetch('/api/task3'),
-    fetch('/api/task4'),
-]);
-console.log("All tasks completed");
+```python
+# Python asyncio 類比
+import asyncio
+
+async def main():
+    results = await asyncio.gather(
+        fetch('/api/task1'),
+        fetch('/api/task2'),
+        fetch('/api/task3'),
+        fetch('/api/task4'),
+    )
+    print("All tasks completed")
 ```
 
-在 Go 中，這等同於：
+或者使用 threading：
 
-```go
-// Go 類比
-var wg sync.WaitGroup
-for i := 0; i < 4; i++ {
-    wg.Add(1)
-    go func(id int) {
-        defer wg.Done()
-        doWork(id)
-    }(i)
-}
-wg.Wait() // 等待全部 goroutine 完成
+```python
+# Python threading 類比
+import threading
+
+barrier = threading.Barrier(4)
+threads = []
+for i in range(4):
+    t = threading.Thread(target=do_work, args=(i,))
+    threads.append(t)
+    t.start()
+for t in threads:
+    t.join()  # 等待全部 thread 完成
 ```
 
 SystemC 的 `SC_FORK` / `SC_JOIN` 做的是完全一樣的事情。
@@ -113,12 +117,12 @@ SC_JOIN
 
 | 元素 | 說明 | 軟體類比 |
 | --- | --- | --- |
-| `SC_FORK` / `SC_JOIN` | 派發多個 process，等全部結束 | `Promise.all([...])` |
-| `sc_spawn(&r, func, "name")` | 動態建立一個 process，`&r` 接收回傳值 | `new Thread(func)` 帶回傳值 |
+| `SC_FORK` / `SC_JOIN` | 派發多個 process，等全部結束 | `Python asyncio.gather(...)` |
+| `sc_spawn(&r, func, "name")` | 動態建立一個 process，`&r` 接收回傳值 | `threading.Thread(target=func)` 帶回傳值 |
 | `sc_bind(&top::round_robin, this, ...)` | 綁定成員函式和參數為一個 callable | `std::bind` / lambda capture |
 | `sc_ref(e1)` | 以參考方式傳遞 `sc_event` | C++ `std::ref` |
 
-**`sc_spawn` 的意義**: 在 SystemC 2.0 及之前，所有 process 必須在建構階段（elaboration phase）靜態註冊。2.1 版的 `sc_spawn` 允許在模擬執行期間動態建立 process -- 就像 Go 可以隨時 `go func()` 一樣。
+**`sc_spawn` 的意義**: 在 SystemC 2.0 及之前，所有 process 必須在建構階段（elaboration phase）靜態註冊。2.1 版的 `sc_spawn` 允許在模擬執行期間動態建立 process -- 就像 Python 可以隨時 `asyncio.create_task()` 一樣。
 
 ### 第二部分：Round-Robin 函式
 
@@ -139,18 +143,18 @@ int round_robin(const char *str, sc_event& receive, sc_event& send, int cnt)
 
 這是一個**事件鏈（event chain）**模式：每個 thread 等待自己的事件，處理完後觸發下一個 thread 的事件。形成一個環形的輪流執行模式。
 
-軟體類比：這類似於多個 goroutine 透過 channel 形成 pipeline：
+軟體類比：這類似於多個 Python coroutine 透過 queue 形成 pipeline：
 
-```go
-// Go 類比
-func roundRobin(name string, receive <-chan struct{}, send chan<- struct{}, cnt int) {
-    for i := 0; i < cnt; i++ {
-        <-receive           // 等待前一個
-        fmt.Printf("Thread %s\n", name)
-        time.Sleep(10 * time.Millisecond)
-        send <- struct{}{}  // 通知下一個
-    }
-}
+```python
+# Python asyncio 類比
+import asyncio
+
+async def round_robin(name: str, receive: asyncio.Queue, send: asyncio.Queue, cnt: int):
+    for i in range(cnt):
+        await receive.get()           # 等待前一個
+        print(f"Thread {name}")
+        await asyncio.sleep(0.01)
+        await send.put(None)          # 通知下一個
 ```
 
 ### 第三部分：Thread Pool 重用
@@ -162,7 +166,7 @@ for (int i = 0 ; i < 10; i++)
 wait(20, SC_NS);
 ```
 
-連續 spawn 10 個 thread，每個等待不同時間後結束。這測試了 SystemC 內部的 thread pool 是否能正確地重用已結束的 thread -- 就像 Java `ThreadPoolExecutor` 會重用 worker thread 一樣。
+連續 spawn 10 個 thread，每個等待不同時間後結束。這測試了 SystemC 內部的 thread pool 是否能正確地重用已結束的 thread -- 就像 Python `concurrent.futures.ThreadPoolExecutor` 會重用 worker thread 一樣。
 
 ### 第四部分：Spawn 一般函式
 
@@ -183,19 +187,19 @@ wait( sc_spawn(&r, sc_bind(&ref_function, sc_cref(d))).terminated_event() );
 **重要觀念**:
 - `sc_spawn` 回傳 `sc_process_handle`，可以用來等待 process 結束
 - `.terminated_event()` 回傳一個 `sc_event`，在 process 結束時觸發
-- `wait(handle.terminated_event())` 等同於 Java 的 `thread.join()`
+- `wait(handle.terminated_event())` 等同於 Python 的 `thread.join()`
 - `sc_cref(d)` 以 const reference 傳遞參數
 
 ## 核心 API 整理
 
 | API | 說明 | 軟體類比 |
 | --- | --- | --- |
-| `sc_spawn(&ret, func, "name")` | 動態建立 process | `go func()` / `new Thread()` |
+| `sc_spawn(&ret, func, "name")` | 動態建立 process | `asyncio.create_task()` / `threading.Thread()` |
 | `sc_bind(func, args...)` | 綁定函式與參數 | `std::bind` / lambda |
 | `sc_ref(x)` / `sc_cref(x)` | 參考 / const 參考傳遞 | `std::ref` / `std::cref` |
-| `SC_FORK ... SC_JOIN` | 平行派發，等待全部完成 | `Promise.all()` |
+| `SC_FORK ... SC_JOIN` | 平行派發，等待全部完成 | `Python asyncio.gather()` |
 | `handle.terminated_event()` | process 結束時觸發的事件 | `thread.join()` |
-| `sc_spawn_options` | spawn 選項（如 stack size） | `ThreadFactory` 設定 |
+| `sc_spawn_options` | spawn 選項（如 stack size） | `threading.Thread` 設定 |
 
 ## 設計理念
 
@@ -206,7 +210,7 @@ wait( sc_spawn(&r, sc_bind(&ref_function, sc_cref(d))).terminated_event() );
 - **Testbench**: 測試時需要動態產生不同的刺激（stimulus）
 - **Protocol modeling**: 協定中的訊息處理可能需要平行追蹤多個狀態機
 
-這就像 web server 為每個 request 建立一個 goroutine / thread 一樣 -- 你無法在編譯時就知道會有多少 request。
+這就像 web server 為每個 request 建立一個 Python coroutine (asyncio) / thread 一樣 -- 你無法在編譯時就知道會有多少 request。
 
 ### SC_FORK/SC_JOIN vs 手動 spawn + wait
 

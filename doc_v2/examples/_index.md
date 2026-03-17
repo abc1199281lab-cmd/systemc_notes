@@ -52,8 +52,8 @@ flowchart TB
 
 | 範例 | 難度 | 一句話說明 | 軟體類比 |
 | --- | --- | --- | --- |
-| [simple_fifo](code/sysc/simple_fifo/_index.md) | 🟢 入門 | 生產者-消費者透過 FIFO 通訊 | Go channel / Java BlockingQueue |
-| [rsa](code/sysc/rsa/_index.md) | 🟢 入門 | RSA 加密演算法，展示大數型別 | BigInteger 運算 |
+| [simple_fifo](code/sysc/simple_fifo/_index.md) | 🟢 入門 | 生產者-消費者透過 FIFO 通訊 | Python queue.Queue |
+| [rsa](code/sysc/rsa/_index.md) | 🟢 入門 | RSA 加密演算法，展示大數型別 | Python native big int 運算 |
 | [simple_perf](code/sysc/simple_perf/_index.md) | 🟢 入門 | 帶時間模型的效能分析 | 效能壓測 + 瓶頸分析 |
 | [pipe](code/sysc/pipe/_index.md) | 🟡 中級 | 多級管線處理 | Unix pipe / 責任鏈模式 |
 | [fir](code/sysc/fir/_index.md) | 🟡 中級 | FIR 有限脈衝響應濾波器 | 滑動視窗加權平均 |
@@ -81,7 +81,7 @@ flowchart TB
 | [at_4_phase](code/tlm/at_4_phase/_index.md) | 🔴 進階 | AT 四階段協議 | 完整握手 TCP |
 | [at_extension_optional](code/tlm/at_extension_optional/_index.md) | 🔴 進階 | AT + 可選擴展 | 可選 HTTP Header |
 | [at_mixed_targets](code/tlm/at_mixed_targets/_index.md) | 🔴 進階 | AT 混合目標 | 異質微服務 |
-| [at_ooo](code/tlm/at_ooo/_index.md) | 🔴 進階 | AT 亂序完成 | 非同步 Promise.all |
+| [at_ooo](code/tlm/at_ooo/_index.md) | 🔴 進階 | AT 亂序完成 | 非同步 asyncio.gather() |
 
 ## 命名對應規則
 

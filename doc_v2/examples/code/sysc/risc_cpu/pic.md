@@ -21,7 +21,7 @@ class EventDispatcher:
             self.clear_pending()
 ```
 
-在 Node.js 中，event loop 類似地監聽多個事件來源（I/O、timer、signal），並在適當時機觸發對應的 callback。PIC 做的是同樣的事，只是觸發的是 CPU 跳轉到中斷處理程式 (ISR, Interrupt Service Routine)。
+在 Python asyncio 中，event loop 類似地監聽多個事件來源（I/O、timer、signal），並在適當時機觸發對應的 callback。PIC 做的是同樣的事，只是觸發的是 CPU 跳轉到中斷處理程式 (ISR, Interrupt Service Routine)。
 
 ## 原始檔案
 

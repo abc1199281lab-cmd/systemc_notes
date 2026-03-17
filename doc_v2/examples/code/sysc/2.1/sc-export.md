@@ -167,14 +167,25 @@ SC_MODULE( D )
 
 軟體類比：
 
-```java
-// Java 類比
-class D {
-    private C channel = new C();
+```python
+# Python 類比 (using ABC)
+from abc import ABC, abstractmethod
 
-    // 不是暴露整個 C 物件，而是只暴露 C_if 介面
-    public C_if getInterface() { return channel; }
-}
+class C_if(ABC):
+    @abstractmethod
+    def run(self) -> None: ...
+
+class C(C_if):
+    def run(self) -> None:
+        print("In Channel run()")
+
+class D:
+    def __init__(self):
+        self._channel = C()
+
+    # 不是暴露整個 C 物件，而是只暴露 C_if 介面
+    def get_interface(self) -> C_if:
+        return self._channel
 ```
 
 ### Module E：多層 Export 與 Export 鏈接

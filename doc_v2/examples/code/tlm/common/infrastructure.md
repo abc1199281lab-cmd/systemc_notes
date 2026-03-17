@@ -11,10 +11,10 @@ description: "traffic_generator、select_initiator、extension_initiator_id、re
 
 | 元件 | 軟體類比 | 功能 |
 |------|----------|------|
-| `traffic_generator` | 負載測試工具（k6, JMeter） | 自動產生 write-then-read 測試流量 |
+| `traffic_generator` | 負載測試工具（k6, Python locust） | 自動產生 write-then-read 測試流量 |
 | `select_initiator` | 自適應 HTTP client | 能處理 2/3/4 phase 不同協定的 AT initiator |
 | `extension_initiator_id` | HTTP custom header | 在 generic payload 上附加自訂 metadata |
-| `reporting` | logging library（Winston, log4j） | 統一的日誌輸出框架 |
+| `reporting` | logging library（Python logging） | 統一的日誌輸出框架 |
 
 ## traffic_generator -- 流量產生器
 
@@ -24,19 +24,16 @@ description: "traffic_generator、select_initiator、extension_initiator_id、re
 
 ### 軟體類比
 
-```javascript
-// traffic_generator 就像一個自動化測試腳本
-async function memoryTest(baseAddress) {
-    // Phase 1: 寫入
-    for (let addr = base; addr < base + 64; addr += 4) {
-        await writeRequest(addr, addr);  // 寫入位址作為資料
-    }
-    // Phase 2: 讀回並驗證
-    for (let addr = base; addr < base + 64; addr += 4) {
-        const data = await readRequest(addr);
-        assert(data === addr, "Data mismatch!");
-    }
-}
+```python
+# traffic_generator 就像一個自動化測試腳本
+async def memory_test(base_address):
+    # Phase 1: 寫入
+    for addr in range(base, base + 64, 4):
+        await write_request(addr, addr)  # 寫入位址作為資料
+    # Phase 2: 讀回並驗證
+    for addr in range(base, base + 64, 4):
+        data = await read_request(addr)
+        assert data == addr, "Data mismatch!"
 ```
 
 ### 架構
@@ -156,13 +153,12 @@ TLM generic payload 的自訂擴展（extension），用來在交易中附加 in
 
 ### 軟體類比
 
-```javascript
-// 就像在 HTTP request 上加 custom header
-fetch('/api/data', {
-    headers: {
-        'X-Initiator-ID': 'Initiator ID: 42'  // 自訂 metadata
-    }
-});
+```python
+# 就像在 HTTP request 上加 custom header
+import requests
+requests.get('/api/data', headers={
+    'X-Initiator-ID': 'Initiator ID: 42'  # 自訂 metadata
+})
 ```
 
 ### 實作

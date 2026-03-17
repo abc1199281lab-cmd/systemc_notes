@@ -34,12 +34,12 @@ typedef sc_bigint<NBITS> bigint;  // 250-bit 有號整數
 
 `sc_bigint<NBITS>` 是 SystemC 提供的**固定位寬有號整數**。與 C++ 的 `int`（通常 32-bit）不同，它可以精確表示 250-bit 的數值。這相當於能表示大約 75 位十進位數字。
 
-| 概念 | SystemC | Python | Java |
+| 概念 | SystemC | Python | C++ |
 | --- | --- | --- | --- |
-| 型別 | `sc_bigint<250>` | `int`（原生無限精度） | `BigInteger` |
-| 位寬 | 編譯時固定 250-bit | 動態增長 | 動態增長 |
-| 運算 | `+`, `-`, `*`, `/`, `%` | 同左 | `.add()`, `.multiply()` 等方法 |
-| 位元存取 | `x[i]` | `(x >> i) & 1` | `.testBit(i)` |
+| 型別 | `sc_bigint<250>` | `int`（原生無限精度） | 無內建（需用 library） |
+| 位寬 | 編譯時固定 250-bit | 動態增長 | 依 library 而定 |
+| 運算 | `+`, `-`, `*`, `/`, `%` | 同左 | 同左（需 operator overloading） |
+| 位元存取 | `x[i]` | `(x >> i) & 1` | `(x >> i) & 1` |
 
 ## 函式逐一解析
 
@@ -222,8 +222,8 @@ int sc_main(int argc, char *argv[]) {
 
 | SystemC 概念 | 軟體對應 | 在本範例中的角色 |
 | --- | --- | --- |
-| `sc_bigint<NBITS>` | `BigInteger` / Python `int` | 所有 RSA 運算的核心型別 |
-| `sc_signed` | `BigInteger` 的基底類別 | `abs_val()` 的參數型別，提供多型 |
+| `sc_bigint<NBITS>` | Python native big int | 所有 RSA 運算的核心型別 |
+| `sc_signed` | Python `int` 的基底概念 | `abs_val()` 的參數型別，提供多型 |
 | `x[i]` 位元存取 | `(x >> i) & 1` | `modular_exp()` 和 `witness()` 中逐位讀取指數 |
 | `x.length()` | `x.bit_length()` | 取得數值的位元長度 |
 | `x.to_int()` | `int(x)` | `div_test()` 中將小數值轉為 C++ int |

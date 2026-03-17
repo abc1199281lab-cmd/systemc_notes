@@ -57,7 +57,7 @@ flowchart LR
 
 - **前置知識**：C++ 基礎
 - **核心收穫**：理解 SystemC 的三大支柱 -- module（元件）、channel（通訊）、process（行為）
-- **關鍵帶走**：SystemC 的 FIFO channel 就是 Go channel 的硬體版本
+- **關鍵帶走**：SystemC 的 FIFO channel 就是 Python queue.Queue 的硬體版本
 
 **pipe** -- 從單一元件到多級系統
 
@@ -234,7 +234,7 @@ flowchart LR
 
 - **前置知識**：at_4_phase 的完整協議
 - **核心收穫**：理解 target 如何以不同於 request 順序完成 response（Out-of-Order）
-- **關鍵帶走**：就像 `Promise.all()` -- 多個請求同時發出，完成順序不確定
+- **關鍵帶走**：就像 `asyncio.gather()` -- 多個請求同時發出，完成順序不確定
 
 ---
 

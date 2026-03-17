@@ -9,7 +9,7 @@
 3. 將信號連接到模組的端口（接線）
 4. 啟動模擬
 
-就像一個 Spring Boot 應用的 `@Configuration` class，或者一個 Docker Compose 的 `docker-compose.yml`。
+就像一個 dependency injection (like Python's inject library) 的 configuration，或者一個 Docker Compose 的 `docker-compose.yml`。
 
 ## 原始檔案
 

@@ -151,16 +151,17 @@ inline D read() {
 
 所以每兩筆資料之間必然有一個時脈的空隙（bubble）。
 
-**軟體類比**: 這就像用 `sync.WaitGroup` 每次只允許一個 goroutine 執行：
-```go
-// sc_ttd 的效果類似於每次都要等 ACK
-wg.Add(1)
-ch <- data     // 送資料
-wg.Wait()      // 等對方確認
-// 下一筆...
+**軟體類比**: 這就像用 `threading.Barrier` 每次只允許一個 thread 執行：
+```python
+# sc_ttd 的效果類似於每次都要等 ACK
+import queue
+q = queue.Queue(maxsize=1)
+q.put(data)       # 送資料
+ack_event.wait()   # 等對方確認
+# 下一筆...
 ```
 
-而 sc_rvd 則像帶有 buffer 的 channel，只要 buffer 沒滿就能持續送。
+而 sc_rvd 則像帶有 buffer 的 `queue.Queue`，只要 buffer 沒滿就能持續送。
 
 ## main.cpp 解析
 
