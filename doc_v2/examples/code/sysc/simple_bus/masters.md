@@ -1,193 +1,193 @@
-# Simple Bus -- Master Modules
+# Simple Bus -- Master 模組
 
-## Overview
+## 概覽
 
-The example includes three master modules, each demonstrating a different bus access pattern. All three are `SC_MODULE` instances using `SC_THREAD` processes (they can call `wait()`).
+本範例包含三個 master 模組，各自展示不同的匯流排存取模式。三個模組都是使用 `SC_THREAD` process 的 `SC_MODULE` 實例（可以呼叫 `wait()`）。
 
-**Software analogy:**
+**軟體類比：**
 
-| Master | Software Equivalent |
+| Master | 軟體對應 |
 |---|---|
-| Blocking | Synchronous API call: `response = httpClient.post(data)` |
-| Non-blocking | Async with polling: `jobId = queue.submit(task); while (!queue.isDone(jobId)) sleep()` |
-| Direct | In-process function call: `value = cache.get(key)` |
+| Blocking | 同步 API 呼叫：`response = httpClient.post(data)` |
+| Non-blocking | 非同步輪詢：`jobId = queue.submit(task); while (!queue.isDone(jobId)) sleep()` |
+| Direct | 程序內函式呼叫：`value = cache.get(key)` |
 
 ---
 
-## Comparison Table
+## 比較表
 
-| Aspect | `master_blocking` | `master_non_blocking` | `master_direct` |
+| 面向 | `master_blocking` | `master_non_blocking` | `master_direct` |
 |---|---|---|---|
-| Bus interface | `simple_bus_blocking_if` | `simple_bus_non_blocking_if` | `simple_bus_direct_if` |
-| Priority | 4 (lower priority) | 3 (higher priority) | N/A (no arbitration) |
-| Data granularity | 16-word burst | Single word | Single word |
-| Target address | `0x4c` (fast mem) | `0x38..0xB8` (wraps) | `0x78` (fast mem, read-only) |
+| 匯流排介面 | `simple_bus_blocking_if` | `simple_bus_non_blocking_if` | `simple_bus_direct_if` |
+| Priority | 4（較低優先權）| 3（較高優先權）| N/A（無仲裁）|
+| 資料粒度 | 16 字 burst | 單字 | 單字 |
+| 目標位址 | `0x4c`（fast mem）| `0x38..0xB8`（循環）| `0x78`（fast mem，唯讀）|
 | Timeout | 300 ns | 20 ns | 100 ns |
 | Lock | false | false | N/A |
-| Role | Bulk data processor | Incremental writer | Monitor/debugger |
+| 角色 | 批次資料處理器 | 增量寫入器 | 監視器/除錯器 |
 
 ---
 
-## File: `simple_bus_master_blocking.h` / `.cpp`
+## 檔案：`simple_bus_master_blocking.h` / `.cpp`
 
-### Software Analogy
+### 軟體類比
 
-This master is like a **batch ETL job**: it reads a large block of data, processes it, writes it back, then sleeps.
+此 master 就像一個**批次 ETL 任務**：讀取一大塊資料、處理它、寫回，然後休眠。
 
-### Structure
+### 結構
 
 ```cpp
 SC_MODULE(simple_bus_master_blocking) {
     sc_in_clk clock;
     sc_port<simple_bus_blocking_if> bus_port;
-    // configured via constructor: priority, address, lock, timeout
+    // 透過建構子設定：priority, address, lock, timeout
 };
 ```
 
-### Behavior: `main_action()` (SC_THREAD)
+### 行為：`main_action()` (SC_THREAD)
 
 ```mermaid
 flowchart TD
-    A["wait() -- next posedge"] --> B["burst_read(priority=4, addr=0x4c, len=16)<br/>Reads 16 words from memory"]
+    A["wait() -- 等待下一個 posedge"] --> B["burst_read(priority=4, addr=0x4c, len=16)<br/>從記憶體讀取 16 個字"]
     B --> C{"status == ERROR?"}
-    C -->|Yes| D["Print error"]
-    C -->|No| E["Loop: mydata[i] += i<br/>wait() between each iteration<br/>(simulates computation time)"]
+    C -->|是| D["印出錯誤"]
+    C -->|否| E["迴圈：mydata[i] += i<br/>每次疊代間 wait()<br/>（模擬計算時間）"]
     D --> E
-    E --> F["burst_write(priority=4, addr=0x4c, len=16)<br/>Writes modified data back"]
+    E --> F["burst_write(priority=4, addr=0x4c, len=16)<br/>將修改後的資料寫回"]
     F --> G{"status == ERROR?"}
-    G -->|Yes| H["Print error"]
-    G -->|No| I["wait(300 ns) -- sleep"]
+    G -->|是| H["印出錯誤"]
+    G -->|否| I["wait(300 ns) -- 休眠"]
     H --> I
     I --> A
 ```
 
-### Key Details
+### 重點說明
 
-- **Burst length:** 16 words (0x10), so it reads addresses `0x4C` through `0x8C`. Note this **crosses the boundary** between fast memory (`0x00-0x7F`) and slow memory (`0x80-0xFF`).
-- **Computation simulation:** The `for` loop with `wait()` between each iteration simulates a CPU spending 16 clock cycles processing data.
-- **Priority = 4:** This is lower than the non-blocking master (priority 3), meaning the non-blocking master can **interrupt** this master's burst transfer.
-- **Block during transfer:** `burst_read()` and `burst_write()` don't return until all 16 words are transferred -- the SC_THREAD is suspended internally via `wait(transfer_done)`.
+- **Burst 長度：** 16 個字（0x10），因此讀取位址 `0x4C` 到 `0x8C`。注意這**跨越了**快速記憶體（`0x00-0x7F`）和慢速記憶體（`0x80-0xFF`）的邊界。
+- **計算模擬：** 帶有 `wait()` 的 `for` 迴圈模擬 CPU 花費 16 個時脈週期處理資料。
+- **Priority = 4：** 低於 non-blocking master（priority 3），表示 non-blocking master 可以**中斷**此 master 的 burst 傳輸。
+- **傳輸期間阻塞：** `burst_read()` 和 `burst_write()` 在所有 16 個字傳輸完成前不會返回——SC_THREAD 透過 `wait(transfer_done)` 在內部暫停。
 
 ---
 
-## File: `simple_bus_master_non_blocking.h` / `.cpp`
+## 檔案：`simple_bus_master_non_blocking.h` / `.cpp`
 
-### Software Analogy
+### 軟體類比
 
-This master is like an **async microservice client**: it submits a request, then busy-polls until the result is ready.
+此 master 就像一個**非同步微服務用戶端**：提交請求後忙輪詢直到結果就緒。
 
-### Structure
+### 結構
 
 ```cpp
 SC_MODULE(simple_bus_master_non_blocking) {
     sc_in_clk clock;
     sc_port<simple_bus_non_blocking_if> bus_port;
-    // configured via constructor: priority, start_address, lock, timeout
+    // 透過建構子設定：priority, start_address, lock, timeout
 };
 ```
 
-### Behavior: `main_action()` (SC_THREAD)
+### 行為：`main_action()` (SC_THREAD)
 
 ```mermaid
 flowchart TD
-    A["wait() -- initial sync"] --> B["bus_port->read(priority=3, &mydata, addr)"]
-    B --> C["Poll: get_status(3)"]
-    C --> D{"OK or ERROR?"}
-    D -->|"WAIT/REQUEST"| E["wait() -- next posedge"]
+    A["wait() -- 初始同步"] --> B["bus_port->read(priority=3, &mydata, addr)"]
+    B --> C["輪詢：get_status(3)"]
+    C --> D{"OK 或 ERROR？"}
+    D -->|"WAIT/REQUEST"| E["wait() -- 等待下一個 posedge"]
     E --> C
-    D -->|ERROR| F["Print error"]
+    D -->|ERROR| F["印出錯誤"]
     D -->|OK| G["mydata += cnt; cnt++"]
     F --> G
     G --> H["bus_port->write(priority=3, &mydata, addr)"]
-    H --> I["Poll: get_status(3)"]
-    I --> J{"OK or ERROR?"}
-    J -->|"WAIT/REQUEST"| K["wait() -- next posedge"]
+    H --> I["輪詢：get_status(3)"]
+    I --> J{"OK 或 ERROR？"}
+    J -->|"WAIT/REQUEST"| K["wait() -- 等待下一個 posedge"]
     K --> I
-    J -->|OK or ERROR| L["wait(20 ns) -- sleep"]
-    L --> M["wait() -- next posedge"]
+    J -->|OK 或 ERROR| L["wait(20 ns) -- 休眠"]
+    L --> M["wait() -- 等待下一個 posedge"]
     M --> N["addr += 4"]
-    N --> O{"addr > start + 0x80?"}
-    O -->|Yes| P["addr = start; cnt = 0"]
-    O -->|No| B
+    N --> O{"addr > start + 0x80？"}
+    O -->|是| P["addr = start; cnt = 0"]
+    O -->|否| B
     P --> B
 ```
 
-### Key Details
+### 重點說明
 
-- **Priority = 3:** Higher than the blocking master, so it can preempt burst transfers.
-- **Polling pattern:** After `read()` returns (immediately), the master enters a `while` loop checking `get_status()` each clock cycle. This is the non-blocking pattern -- the master is responsible for detecting completion.
-- **Address sweep:** Starts at `0x38`, increments by 4 each iteration, wraps back after reaching `0x38 + 0x80 = 0xB8`. This covers both fast and slow memory regions.
-- **Read-modify-write:** Each iteration reads one word, adds a counter value, writes it back.
+- **Priority = 3：** 高於 blocking master，因此可以搶佔 burst 傳輸。
+- **輪詢模式：** `read()` 返回後（立即），master 進入 `while` 迴圈每個時脈週期檢查 `get_status()`。這是 non-blocking 模式——master 負責偵測完成。
+- **位址掃描：** 從 `0x38` 開始，每次疊代增加 4，到達 `0x38 + 0x80 = 0xB8` 後循環回去。涵蓋快速和慢速記憶體兩個區域。
+- **讀-改-寫：** 每次疊代讀取一個字，加上計數器值，再寫回。
 
-### Blocking vs. Non-Blocking: What's the Real Difference?
+### Blocking vs. Non-blocking：真正的差異是什麼？
 
-Both masters use `SC_THREAD` and both call `wait()`. The difference is **where the waiting logic lives**:
+兩個 master 都使用 `SC_THREAD`，都會呼叫 `wait()`。差異在於**等待邏輯位於何處**：
 
-- **Blocking:** The `wait()` is hidden inside `burst_read()` -- the master just calls the function and gets a result.
-- **Non-blocking:** The master explicitly polls with a `while` loop. It has **full control** over what to do between checks (though in this example, it just waits).
+- **Blocking：** `wait()` 隱藏在 `burst_read()` 內部——master 只是呼叫函式並取得結果。
+- **Non-blocking：** Master 明確地用 `while` 迴圈輪詢。它**完全掌控**每次查詢之間要做什麼（雖然在本範例中只是等待）。
 
-In software, this is the difference between:
+以軟體來說，這就是以下兩者的差異：
 ```python
 # Blocking
-result = requests.get(url)  # blocks until response
+result = requests.get(url)  # 阻塞直到收到回應
 
 # Non-blocking
-future = session.get(url)   # returns immediately
+future = session.get(url)   # 立即返回
 while not future.done():
-    time.sleep(0.01)         # explicit polling
+    time.sleep(0.01)         # 明確輪詢
 result = future.result()
 ```
 
 ---
 
-## File: `simple_bus_master_direct.h` / `.cpp`
+## 檔案：`simple_bus_master_direct.h` / `.cpp`
 
-### Software Analogy
+### 軟體類比
 
-This master is a **read-only monitoring dashboard** -- it periodically samples memory values and prints them, without going through the bus protocol.
+此 master 是一個**唯讀監控儀表板**——週期性地取樣記憶體值並印出，而不通過匯流排協定。
 
-### Structure
+### 結構
 
 ```cpp
 SC_MODULE(simple_bus_master_direct) {
     sc_in_clk clock;
     sc_port<simple_bus_direct_if> bus_port;
-    // configured via constructor: address, timeout, verbose
+    // 透過建構子設定：address, timeout, verbose
 };
 ```
 
-### Behavior: `main_action()` (SC_THREAD)
+### 行為：`main_action()` (SC_THREAD)
 
 ```mermaid
 flowchart TD
     A["direct_read(&mydata[0], 0x78)"] --> B["direct_read(&mydata[1], 0x7C)"]
     B --> C["direct_read(&mydata[2], 0x80)"]
     C --> D["direct_read(&mydata[3], 0x84)"]
-    D --> E["Print: mem[0x78:0x87] = (val, val, val, val)"]
+    D --> E["印出：mem[0x78:0x87] = (val, val, val, val)"]
     E --> F["wait(100 ns)"]
     F --> A
 ```
 
-### Key Details
+### 重點說明
 
-- **No priority:** Direct access bypasses the arbiter entirely.
-- **Reads 4 words:** At addresses `0x78, 0x7C, 0x80, 0x84`. Note that `0x78-0x7C` are in fast memory and `0x80-0x84` are in slow memory -- but direct access ignores wait states.
-- **Instant execution:** All 4 reads happen in the same simulation time step (no `wait()` between them).
-- **Monitor role:** This master never writes -- it's purely observational. Useful for debugging what the other masters are doing to memory.
-- **No clock sensitivity in constructor:** Unlike the other masters, `SC_THREAD(main_action)` has no `sensitive << clock.pos()`. The thread runs freely, using `wait(timeout)` for its own timing.
+- **無 priority：** Direct 存取完全繞過 arbiter。
+- **讀取 4 個字：** 位址 `0x78, 0x7C, 0x80, 0x84`。注意 `0x78-0x7C` 在快速記憶體，`0x80-0x84` 在慢速記憶體——但 direct 存取忽略等待週期。
+- **即時執行：** 全部 4 次讀取在同一個模擬時間步驟內完成（之間沒有 `wait()`）。
+- **監視器角色：** 此 master 從不寫入——純粹用於觀測。適合用來除錯其他 master 對記憶體的操作。
+- **建構子中無時脈敏感性：** 與其他 master 不同，`SC_THREAD(main_action)` 沒有 `sensitive << clock.pos()`。執行緒自由運行，使用 `wait(timeout)` 控制自己的時序。
 
 ---
 
-## How Masters Connect to the Same Bus
+## 三個 Master 如何連接到同一個 Bus
 
-All three masters connect to the **same `simple_bus` instance**, but through different interface views:
+三個 master 都連接到**同一個 `simple_bus` 實例**，但透過不同的介面視角：
 
 ```mermaid
 graph LR
-    subgraph "One simple_bus object"
-        BI["blocking_if view"]
-        NBI["non_blocking_if view"]
-        DI["direct_if view"]
+    subgraph "一個 simple_bus 物件"
+        BI["blocking_if 視角"]
+        NBI["non_blocking_if 視角"]
+        DI["direct_if 視角"]
     end
 
     MB["master_blocking<br/>sc_port&lt;blocking_if&gt;"] -->|"bus_port(*bus)"| BI
@@ -195,4 +195,4 @@ graph LR
     MD["master_direct<br/>sc_port&lt;direct_if&gt;"] -->|"bus_port(*bus)"| DI
 ```
 
-The binding `master_b->bus_port(*bus)` works because `simple_bus` inherits from `simple_bus_blocking_if`. C++ resolves the correct interface view at compile time. Each master only sees the methods defined in its specific interface -- the compiler prevents a direct master from accidentally calling `burst_read()`.
+綁定 `master_b->bus_port(*bus)` 可行，是因為 `simple_bus` 繼承自 `simple_bus_blocking_if`。C++ 在編譯期解析正確的介面視角。每個 master 只看到其特定介面中定義的方法——編譯器防止 direct master 意外呼叫 `burst_read()`。

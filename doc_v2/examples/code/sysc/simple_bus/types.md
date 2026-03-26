@@ -1,16 +1,16 @@
-# Simple Bus -- Types, Request Structure, and Utilities
+# Simple Bus -- 型別、請求結構與工具函式
 
-## Overview
+## 概覽
 
-These files define the shared data types used throughout the simple bus system: status codes, lock states, the request structure that flows through the bus, and a utility function.
+這些檔案定義了整個 simple bus 系統共用的資料型別：狀態碼、lock 狀態、流經匯流排的請求結構，以及工具函式。
 
-**Source files:** `simple_bus_types.h`, `simple_bus_types.cpp`, `simple_bus_request.h`, `simple_bus_tools.cpp`
+**來源檔案：** `simple_bus_types.h`、`simple_bus_types.cpp`、`simple_bus_request.h`、`simple_bus_tools.cpp`
 
 ---
 
-## File: `simple_bus_types.h` / `.cpp`
+## 檔案：`simple_bus_types.h` / `.cpp`
 
-### Status Enum
+### 狀態列舉（Status Enum）
 
 ```cpp
 enum simple_bus_status {
@@ -21,16 +21,16 @@ enum simple_bus_status {
 };
 ```
 
-**Software analogy:** HTTP status codes:
+**軟體類比：** HTTP 狀態碼：
 
-| Bus Status | Value | HTTP Equivalent | Meaning |
+| 匯流排狀態 | 值 | HTTP 對應 | 意義 |
 |---|---|---|---|
-| `SIMPLE_BUS_OK` | 0 | 200 OK | Transfer completed successfully |
-| `SIMPLE_BUS_REQUEST` | 1 | 202 Accepted | Request submitted, waiting to be processed |
-| `SIMPLE_BUS_WAIT` | 2 | 102 Processing | Being processed, not done yet |
-| `SIMPLE_BUS_ERROR` | 3 | 500 Error | Transfer failed |
+| `SIMPLE_BUS_OK` | 0 | 200 OK | 傳輸成功完成 |
+| `SIMPLE_BUS_REQUEST` | 1 | 202 Accepted | 請求已提交，等待處理 |
+| `SIMPLE_BUS_WAIT` | 2 | 102 Processing | 正在處理，尚未完成 |
+| `SIMPLE_BUS_ERROR` | 3 | 500 Error | 傳輸失敗 |
 
-### Status String Array
+### 狀態字串陣列
 
 ```cpp
 char simple_bus_status_str[4][20] = {
@@ -41,75 +41,75 @@ char simple_bus_status_str[4][20] = {
 };
 ```
 
-Used for debug output -- converts the enum integer to a human-readable string.
+用於除錯輸出——將列舉整數轉換成人類可讀的字串。
 
-### Forward Declarations
+### 前向宣告
 
 ```cpp
 struct simple_bus_request;
 typedef std::vector<simple_bus_request *> simple_bus_request_vec;
 ```
 
-`simple_bus_request_vec` is the container type used by the arbiter -- it receives a vector of pending request pointers.
+`simple_bus_request_vec` 是 arbiter 使用的容器型別——它接收一個待處理請求指標的 vector。
 
-### `sb_fprintf` Declaration
+### `sb_fprintf` 宣告
 
 ```cpp
 extern int sb_fprintf(FILE *, const char *, ...);
 ```
 
-A signal-safe version of `fprintf` (see `simple_bus_tools.cpp` below).
+信號安全版本的 `fprintf`（詳見下方 `simple_bus_tools.cpp`）。
 
 ---
 
-## File: `simple_bus_request.h`
+## 檔案：`simple_bus_request.h`
 
-### Lock Status Enum
+### Lock 狀態列舉
 
 ```cpp
 enum simple_bus_lock_status {
-    SIMPLE_BUS_LOCK_NO = 0,      // No lock
-    SIMPLE_BUS_LOCK_SET,          // Lock requested
-    SIMPLE_BUS_LOCK_GRANTED       // Lock confirmed by arbiter
+    SIMPLE_BUS_LOCK_NO = 0,      // 無鎖定
+    SIMPLE_BUS_LOCK_SET,          // 已請求鎖定
+    SIMPLE_BUS_LOCK_GRANTED       // 已由 arbiter 確認鎖定
 };
 ```
 
-These three states form a small state machine that governs bus reservation (see [arbiter.md](arbiter.md) for details).
+這三個狀態組成一個小型狀態機，管理匯流排保留（詳見 [arbiter.md](arbiter.md)）。
 
-### Request Structure
+### 請求結構
 
 ```cpp
 struct simple_bus_request {
-    // Identity
+    // 身份識別
     unsigned int priority;
 
-    // Request parameters
+    // 請求參數
     bool do_write;
     unsigned int address;
     unsigned int end_address;
     int *data;
     simple_bus_lock_status lock;
 
-    // Completion
+    // 完成通知
     sc_event transfer_done;
     simple_bus_status status;
 };
 ```
 
-**Software analogy:** This is a **task ticket** in a job queue system:
+**軟體類比：** 這是工作佇列系統中的一張**任務票據**：
 
-| Field | Analogy | Description |
+| 欄位 | 類比 | 說明 |
 |---|---|---|
-| `priority` | Job priority / client ID | Lower = more important. Also serves as unique master identifier. |
-| `do_write` | HTTP method (GET vs PUT) | `false` = read, `true` = write |
-| `address` | Current URL/offset | Current byte address being processed |
-| `end_address` | End of range | Last byte address for burst transfers. For single transfers, equals `address`. |
-| `data` | Payload pointer | Points to the master's data buffer. Incremented after each word transfer. |
-| `lock` | Advisory lock state | Controls bus reservation between consecutive requests. |
-| `transfer_done` | Completion callback / Promise | `sc_event` that the blocking interface `wait()`s on. Notified when the bus finishes the transfer. |
-| `status` | Job status | Current state: `OK`, `REQUEST`, `WAIT`, or `ERROR`. |
+| `priority` | 工作優先權 / 用戶端 ID | 數字越小越重要。同時作為 master 的唯一識別碼。 |
+| `do_write` | HTTP 方法（GET vs PUT）| `false` = 讀取，`true` = 寫入 |
+| `address` | 當前 URL/偏移量 | 當前正在處理的位元組位址 |
+| `end_address` | 範圍結束 | burst 傳輸的最後一個位元組位址。單次傳輸時等於 `address`。 |
+| `data` | Payload 指標 | 指向 master 的資料緩衝區，每次傳輸一個字後遞增。 |
+| `lock` | Advisory lock 狀態 | 控制連續請求之間的匯流排保留。 |
+| `transfer_done` | 完成回調 / Promise | blocking 介面 `wait()` 等待的 `sc_event`，bus 完成傳輸後通知。 |
+| `status` | 工作狀態 | 當前狀態：`OK`、`REQUEST`、`WAIT` 或 `ERROR`。 |
 
-### Default Constructor
+### 預設建構子
 
 ```cpp
 simple_bus_request::simple_bus_request()
@@ -118,30 +118,30 @@ simple_bus_request::simple_bus_request()
 {}
 ```
 
-New requests start in `OK` status with no lock. The bus fills in the actual fields when a master calls a bus interface function.
+新請求以 `OK` 狀態且無鎖定開始。當 master 呼叫匯流排介面函式時，bus 會填入實際欄位。
 
-### Request Lifecycle
+### 請求生命週期
 
 ```mermaid
 stateDiagram-v2
-    [*] --> OK : default constructor
+    [*] --> OK : 預設建構子
 
-    OK --> REQUEST : Master calls read/write/burst_read/burst_write
-    REQUEST --> WAIT : Arbiter selects this request, bus begins processing
-    WAIT --> WAIT : Slave returns WAIT (slow memory)
-    WAIT --> OK : Slave returns OK, all data transferred
-    WAIT --> ERROR : Slave returns ERROR or address invalid
+    OK --> REQUEST : Master 呼叫 read/write/burst_read/burst_write
+    REQUEST --> WAIT : Arbiter 選中此請求，bus 開始處理
+    WAIT --> WAIT : Slave 回傳 WAIT（慢速記憶體）
+    WAIT --> OK : Slave 回傳 OK，所有資料傳輸完畢
+    WAIT --> ERROR : Slave 回傳 ERROR 或位址無效
 
-    REQUEST --> REQUEST : Not yet selected by arbiter (waiting in queue)
-    ERROR --> REQUEST : Master submits new request
-    OK --> REQUEST : Master submits new request
+    REQUEST --> REQUEST : 尚未被 arbiter 選中（在佇列等待中）
+    ERROR --> REQUEST : Master 提交新請求
+    OK --> REQUEST : Master 提交新請求
 ```
 
 ---
 
-## File: `simple_bus_tools.cpp`
+## 檔案：`simple_bus_tools.cpp`
 
-### `sb_fprintf` -- Signal-Safe Printf
+### `sb_fprintf` -- 信號安全的 Printf
 
 ```cpp
 int sb_fprintf(FILE *fp, const char *fmt, ...) {
@@ -156,20 +156,20 @@ int sb_fprintf(FILE *fp, const char *fmt, ...) {
 }
 ```
 
-This is a wrapper around `vfprintf` that retries on `EINTR` (interrupted by signal). In standard C, `fprintf` can fail silently if a Unix signal arrives during the write. This wrapper ensures the output actually gets written.
+這是 `vfprintf` 的包裝函式，在 `EINTR`（被信號中斷）時重試。在標準 C 中，如果 Unix 信號在寫入過程中到達，`fprintf` 可能會無聲失敗。這個包裝函式確保輸出確實被寫出。
 
-**Software analogy:** An HTTP client with automatic retry on transient network errors.
+**軟體類比：** 具備暫時性網路錯誤自動重試功能的 HTTP 用戶端。
 
-All debug output in the system uses `sb_fprintf` instead of `printf` or `fprintf` directly.
+系統中所有的除錯輸出都使用 `sb_fprintf`，而非直接使用 `printf` 或 `fprintf`。
 
 ---
 
-## How Types Flow Through the System
+## 型別在系統中的流動方式
 
 ```mermaid
 graph LR
     subgraph Master
-        M["Calls bus_port->read(priority, &data, addr)"]
+        M["呼叫 bus_port->read(priority, &data, addr)"]
     end
 
     subgraph Bus
@@ -185,12 +185,12 @@ graph LR
         S["read(data*, addr) -> status"]
     end
 
-    M -->|"fills in"| R
-    R -->|"stored in"| Q
-    Q -->|"filtered, passed to"| A
-    A -->|"returns winner"| R
-    R -->|"dispatched to"| S
-    S -->|"returns status"| R
+    M -->|"填入"| R
+    R -->|"存入"| Q
+    Q -->|"過濾後傳入"| A
+    A -->|"回傳獲勝者"| R
+    R -->|"分派至"| S
+    S -->|"回傳狀態"| R
 ```
 
-The `simple_bus_request` struct is the central data structure that ties the whole system together. It's created once per master (identified by priority) and reused across multiple transactions. The bus fills it in when a master calls an interface function, the arbiter selects from the collection, and the bus uses it to dispatch to the slave.
+`simple_bus_request` 結構是串聯整個系統的核心資料結構。每個 master（以 priority 識別）只建立一個請求物件並在多次交易中重複使用。Bus 在 master 呼叫介面函式時填入它，arbiter 從集合中選取，bus 再用它分派到 slave。

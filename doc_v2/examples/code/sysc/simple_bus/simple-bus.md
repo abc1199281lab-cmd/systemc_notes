@@ -1,14 +1,14 @@
-# Simple Bus -- Bus Channel Implementation
+# Simple Bus -- Bus Channel 實作
 
-## Overview
+## 概覽
 
-`simple_bus` is the central **hierarchical channel** of this example. It is both an `sc_module` (has processes, ports) and implements three `sc_interface` subclasses (blocking, non-blocking, direct). In software terms, it is the **connection pool + request dispatcher** -- it receives requests from masters, delegates to the arbiter for scheduling, and forwards operations to the appropriate slave.
+`simple_bus` 是本範例的核心**階層式 channel（hierarchical channel）**。它既是 `sc_module`（有 process 和 port），也實作了三個 `sc_interface` 子類別（blocking、non-blocking、direct）。以軟體的角度來看，它是**連線池 + 請求分派器**——接收來自 master 的請求、委託 arbiter 進行排程，並將操作轉發到對應的 slave。
 
-**Source files:** `simple_bus.h`, `simple_bus.cpp`
+**來源檔案：** `simple_bus.h`、`simple_bus.cpp`
 
 ---
 
-## Class Structure
+## 類別結構
 
 ```mermaid
 classDiagram
@@ -37,77 +37,77 @@ classDiagram
     }
 ```
 
-### Ports
+### Port 說明
 
-| Port | Type | Description |
-|------|------|-------------|
-| `clock` | `sc_in_clk` | System clock. Bus acts on **negedge** (falling edge). |
-| `arbiter_port` | `sc_port<simple_bus_arbiter_if>` | Single arbiter connection. |
-| `slave_port` | `sc_port<simple_bus_slave_if, 0>` | **Multi-port** (the `0` means unlimited bindings). Multiple slaves connect here. |
+| Port | 型別 | 說明 |
+|------|------|------|
+| `clock` | `sc_in_clk` | 系統時脈。Bus 在**negedge（下降沿）**動作。 |
+| `arbiter_port` | `sc_port<simple_bus_arbiter_if>` | 單一 arbiter 連線。 |
+| `slave_port` | `sc_port<simple_bus_slave_if, 0>` | **Multi-port**（`0` 表示無限制綁定數量）。多個 slave 連接至此。 |
 
-The `0` template parameter on `slave_port` is noteworthy -- in software terms, it's like declaring a dependency as `List<SlaveInterface>` instead of `SlaveInterface`. The bus iterates over all bound slaves to find the right one by address.
+`slave_port` 的 `0` 模板參數值得注意——以軟體角度來說，這就像把依賴宣告為 `List<SlaveInterface>` 而非 `SlaveInterface`。Bus 遍歷所有綁定的 slave，以位址找到正確的那一個。
 
 ---
 
-## Process: `main_action()`
+## Process：`main_action()`
 
-The bus has a single `SC_METHOD` triggered on `clock.neg()` (falling clock edge):
+Bus 有一個在 `clock.neg()`（下降沿）觸發的 `SC_METHOD`：
 
 ```mermaid
 flowchart TD
-    START["clock negedge triggers main_action()"]
+    START["時脈 negedge 觸發 main_action()"]
     A{"m_current_request == NULL?"}
-    A -->|Yes| B["get_next_request()<br/>collect pending requests<br/>call arbiter"]
-    A -->|No| C["Slave still processing<br/>(log wait state)"]
-    B --> D{"Got a request?"}
+    A -->|是| B["get_next_request()<br/>收集待處理請求<br/>呼叫 arbiter"]
+    A -->|否| C["Slave 仍在處理中<br/>（記錄等待週期）"]
+    B --> D{"取得請求？"}
     C --> D
-    D -->|Yes| E["handle_request()<br/>dispatch to slave"]
-    D -->|No| F["clear_locks()"]
-    E --> G{"Slave response?"}
-    G -->|SIMPLE_BUS_OK| H["Advance address/data pointers"]
-    G -->|SIMPLE_BUS_WAIT| I["Keep m_current_request<br/>(retry next cycle)"]
-    G -->|SIMPLE_BUS_ERROR| J["Notify error, clear request"]
-    H --> K{"Transfer complete?<br/>(addr > end_addr)"}
-    K -->|Yes| L["Notify transfer_done<br/>Clear m_current_request"]
-    K -->|No| M["Clear m_current_request<br/>(arbiter re-selects next cycle)"]
+    D -->|是| E["handle_request()<br/>分派至 slave"]
+    D -->|否| F["clear_locks()"]
+    E --> G{"Slave 回應？"}
+    G -->|SIMPLE_BUS_OK| H["推進 address/data 指標"]
+    G -->|SIMPLE_BUS_WAIT| I["保留 m_current_request<br/>（下一個週期重試）"]
+    G -->|SIMPLE_BUS_ERROR| J["通知錯誤，清除請求"]
+    H --> K{"傳輸完成？<br/>（addr > end_addr）"}
+    K -->|是| L["通知 transfer_done<br/>清除 m_current_request"]
+    K -->|否| M["清除 m_current_request<br/>（arbiter 下一個週期重新選擇）"]
 ```
 
-### Why Clear `m_current_request` Between Burst Words?
+### 為何在 Burst 字與字之間清除 `m_current_request`？
 
-After each word of a burst transfer completes (`SIMPLE_BUS_OK` but more data remains), the bus sets `m_current_request = NULL`. This forces the arbiter to re-evaluate all pending requests next cycle.
+每次 burst 傳輸中一個字完成後（`SIMPLE_BUS_OK` 但還有更多資料），bus 將 `m_current_request = NULL`。這強制 arbiter 在下一個週期重新評估所有待處理請求。
 
-**Software analogy:** It's like a cooperative scheduler -- after each quantum (one word transfer), the running task yields and the scheduler decides if a higher-priority task should run. This allows a high-priority non-blocking master to **preempt** a lower-priority burst in progress (unless locked).
+**軟體類比：** 就像協作式排程器——每個量子（一個字的傳輸）後，執行中的任務讓出控制權，排程器決定是否應該執行優先權更高的任務。這讓高優先權的 non-blocking master 可以**搶佔**進行中的低優先權 burst 傳輸（除非有 lock）。
 
 ---
 
-## Interface Implementations
+## 介面實作
 
-### Direct Interface (`direct_read` / `direct_write`)
+### Direct 介面（`direct_read` / `direct_write`）
 
-The simplest path -- no arbitration, no request queue:
+最簡單的路徑——無仲裁、無請求佇列：
 
-1. Check address alignment (must be word-aligned, multiple of 4)
-2. Call `get_slave(address)` to find the matching slave
-3. Forward directly to `slave->direct_read()` or `slave->direct_write()`
+1. 檢查位址對齊（必須是字對齊，4 的倍數）
+2. 呼叫 `get_slave(address)` 找到對應的 slave
+3. 直接轉發至 `slave->direct_read()` 或 `slave->direct_write()`
 
-This executes in **zero simulation time** -- it's a function call chain with no `wait()`.
+這在**零模擬時間**內執行——是一條沒有 `wait()` 的函式呼叫鏈。
 
-### Non-Blocking Interface (`read` / `write` / `get_status`)
+### Non-blocking 介面（`read` / `write` / `get_status`）
 
-1. `get_request(priority)` retrieves (or creates) a request form for this master
-2. Fills in the request fields (address, data pointer, read/write flag)
-3. Sets `request->status = SIMPLE_BUS_REQUEST`
-4. Returns immediately -- the actual transfer happens in `main_action()` on the next negedge
+1. `get_request(priority)` 取得（或建立）此 master 的請求物件
+2. 填入請求欄位（位址、資料指標、讀/寫旗標）
+3. 設定 `request->status = SIMPLE_BUS_REQUEST`
+4. 立即返回——實際傳輸在下一個 negedge 的 `main_action()` 中執行
 
-The caller polls with `get_status(priority)` which simply returns `get_request(priority)->status`.
+呼叫者用 `get_status(priority)` 輪詢，此方法只是回傳 `get_request(priority)->status`。
 
-### Blocking Interface (`burst_read` / `burst_write`)
+### Blocking 介面（`burst_read` / `burst_write`）
 
-1. Same setup as non-blocking: fill in request form
-2. But `end_address = start_address + (length-1)*4` for multi-word burst
-3. **Key difference:** calls `wait(request->transfer_done)` -- this suspends the calling SC_THREAD
-4. After the bus completes (or errors), `main_action` notifies `transfer_done`
-5. The master then does `wait(clock->posedge_event())` to re-synchronize to the rising edge
+1. 與 non-blocking 相同的設定：填入請求物件
+2. 但 `end_address = start_address + (length-1)*4` 用於多字 burst
+3. **關鍵差異：** 呼叫 `wait(request->transfer_done)` ——這會暫停呼叫端的 SC_THREAD
+4. Bus 完成（或發生錯誤）後，`main_action` 通知 `transfer_done`
+5. Master 接著執行 `wait(clock->posedge_event())` 以重新同步至上升沿
 
 ```mermaid
 sequenceDiagram
@@ -123,69 +123,69 @@ sequenceDiagram
     Note over B: negedge
     B->>B: get_next_request()
     B->>A: arbitrate(pending_requests)
-    A-->>B: selected request
+    A-->>B: 選中的請求
 
-    loop For each word in burst
+    loop 對 burst 中的每個字
         B->>S: slave->read(data, addr)
-        alt Slave returns OK
+        alt Slave 回傳 OK
             B->>B: addr += 4, data++
-        else Slave returns WAIT
-            Note over B: retry next negedge
+        else Slave 回傳 WAIT
+            Note over B: 下一個 negedge 重試
         end
     end
 
     B->>M: notify(transfer_done)
-    Note over M: wait(posedge) to re-sync
-    M->>M: Continue processing
+    Note over M: wait(posedge) 重新同步
+    M->>M: 繼續處理
 ```
 
 ---
 
-## Key Internal Methods
+## 關鍵內部方法
 
 ### `get_slave(address)`
 
-Iterates over all bound slaves and returns the one whose address range `[start_address, end_address]` contains the given address. Returns `NULL` if no match.
+遍歷所有綁定的 slave，回傳位址範圍 `[start_address, end_address]` 包含給定位址的那一個。找不到時回傳 `NULL`。
 
-**Software analogy:** URL router matching -- `/api/users/123` matches the route `/api/users/:id`.
+**軟體類比：** URL 路由比對——`/api/users/123` 比對到路由 `/api/users/:id`。
 
 ### `get_request(priority)`
 
-Searches `m_requests` for a request with matching priority. If not found, creates a new one. The priority serves as both the master's unique ID and its importance level.
+在 `m_requests` 中搜尋具有對應 priority 的請求。找不到時建立新的。Priority 同時作為 master 的唯一 ID 和重要性級別。
 
-**Software analogy:** A session store keyed by client ID.
+**軟體類比：** 以用戶端 ID 為鍵的 session 儲存。
 
 ### `get_next_request()`
 
-Collects all requests with status `SIMPLE_BUS_REQUEST` or `SIMPLE_BUS_WAIT`, passes them to `arbiter_port->arbitrate()`, and returns the winner.
+收集所有狀態為 `SIMPLE_BUS_REQUEST` 或 `SIMPLE_BUS_WAIT` 的請求，傳入 `arbiter_port->arbitrate()`，並回傳獲勝者。
 
 ### `clear_locks()`
 
-Called when no request is active. Downgrades lock states:
-- `SIMPLE_BUS_LOCK_GRANTED` -> `SIMPLE_BUS_LOCK_SET` (preserve for next round)
-- Others -> `SIMPLE_BUS_LOCK_NO` (release)
+在沒有活動請求時呼叫。降級 lock 狀態：
+- `SIMPLE_BUS_LOCK_GRANTED` -> `SIMPLE_BUS_LOCK_SET`（保留至下一輪）
+- 其他 -> `SIMPLE_BUS_LOCK_NO`（釋放）
 
 ### `end_of_elaboration()`
 
-Called automatically by SystemC after all modules are connected but before simulation starts. Checks for **overlapping address spaces** between slaves -- if two slaves claim the same address range, it exits with an error.
+SystemC 在所有模組連接後、模擬開始前自動呼叫。檢查 slave 之間是否有**重疊的位址空間**——如果兩個 slave 宣告了相同的位址範圍，則以錯誤退出。
 
-**Software analogy:** Application startup validation -- like checking for duplicate route definitions in a web framework.
+**軟體類比：** 應用程式啟動驗證——就像檢查 web framework 中是否有重複的路由定義。
 
 ---
 
-## Lock Mechanism State Machine
+## Lock 機制狀態機
 
 ```mermaid
 stateDiagram-v2
-    [*] --> LOCK_NO : initial state
+    [*] --> LOCK_NO : 初始狀態
 
-    LOCK_NO --> LOCK_SET : request with lock=true
-    LOCK_SET --> LOCK_GRANTED : arbiter selects this request
-    LOCK_GRANTED --> LOCK_SET : transfer done, clear_locks()
-    LOCK_SET --> LOCK_NO : transfer done but was not granted, clear_locks()
+    LOCK_NO --> LOCK_SET : 帶有 lock=true 的請求
+    LOCK_SET --> LOCK_GRANTED : arbiter 選中此請求
+    LOCK_GRANTED --> LOCK_SET : 傳輸完成，clear_locks()
+    LOCK_SET --> LOCK_NO : 傳輸完成但未被 granted，clear_locks()
 
-    note right of LOCK_SET : Bus reserved but not yet confirmed
-    note right of LOCK_GRANTED : Arbiter will prioritize this master
+    note right of LOCK_SET : 匯流排已保留但尚未確認
+    note right of LOCK_GRANTED : Arbiter 將優先選擇此 master
 ```
 
-The lock mechanism allows a master to **chain multiple bus transactions** without being preempted. It works like a database advisory lock -- the first transaction sets the lock, and if granted, subsequent transactions from the same master are guaranteed bus access.
+Lock 機制讓 master 可以**串聯多筆匯流排交易**而不被搶佔。它的運作方式類似資料庫 advisory lock——第一筆交易設定 lock，若被 granted，同一個 master 的後續交易就保證能取得匯流排存取權。
