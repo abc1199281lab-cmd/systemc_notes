@@ -12,23 +12,23 @@
 
 | 目錄 | 語言 | 說明 |
 |------|------|------|
-| [zh-TW/](zh-TW/) | 繁體中文 | 完整筆記：由上而下概念、由下而上原始碼解析、範例、圖表 |
-| [en/](en/) | English | 由上而下概念、範例、圖表 |
+| [zh-TW/](zh-TW/) | 繁體中文 | 概念、原始碼解析、範例、圖表 |
+| [en/](en/) | English | 概念、原始碼解析、範例、圖表 |
 
 ### 內容結構
 
 ```
+examples/    — SystemC 與 TLM 範例導讀（從這裡開始！）
 topdown/     — 概念性架構文件（模擬引擎、事件、排程等）
-code/        — 逐檔原始碼解析（僅繁中版）
-examples/    — SystemC 與 TLM 範例導讀
+code/        — 逐檔原始碼解析
 diagrams/    — 架構總覽圖表
 ```
 
 ## 建議閱讀順序
 
-1. **先讀** [learning-path](zh-TW/topdown/learning-path.md)，了解建議的閱讀順序
-2. 每份文件都以「生活類比」開頭，幫助建立直覺
-3. 概念理解後，前往 `zh-TW/code/` 查看對應的底層程式碼文件
+1. **從範例開始** — 瀏覽 [examples/](zh-TW/examples/) 看 SystemC 實際怎麼用。多數開發者從範例學習最有效率
+2. **需要時查閱概念** — 參考 [topdown/](zh-TW/topdown/) 了解設計背後的「為什麼」
+3. **深入原始碼** — 探索 [code/](zh-TW/code/) 查看 SystemC 函式庫的逐檔解析
 4. Mermaid 圖表可用 GitHub、VSCode 預覽或任何支援 Mermaid 的工具檢視
 
 ## 關於
