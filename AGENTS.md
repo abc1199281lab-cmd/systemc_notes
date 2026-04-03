@@ -10,8 +10,8 @@
 ## Folder Structure
 
 ```
-doc/draft: 用來存放draft的資料, free to change
-doc/formal: reviewed and formalized documents, no change unless prompted.
+zh-TW/: 繁體中文筆記 (topdown/, code/, examples/, diagrams/)
+en/: English translation (topdown/, examples/, diagrams/)
 ref/systemc: 用來存放ref/systemc的資料, no change at all
 ```
 
