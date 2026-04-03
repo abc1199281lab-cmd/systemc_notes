@@ -77,8 +77,8 @@ classDiagram
         -extract() void
     }
 
-    Writer -->|"透過 sc_export"| dpipe : 寫入
-    dpipe -->|"透過 sc_export"| Reader : 讀取
+    Writer --> dpipe : 透過 sc_export 寫入
+    dpipe --> Reader : 透過 sc_export 讀取
 ```
 
 ## 程式碼解析
